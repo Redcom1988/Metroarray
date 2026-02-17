@@ -742,4 +742,10 @@
     <string name="local_music_info_title">Add Your Music</string>
     <string name="local_music_info_desc">Add folders from your device to play your local music collection. Each subfolder will become a playlist.</string>
     <string name="select_folder">Select Folder</string>
+
+    <!-- Local Music Browser -->
+    <string name="no_local_songs">No local songs found. Add a music folder in settings.</string>
+    <string name="no_local_albums">No local albums found.</string>
+    <string name="no_local_artists">No local artists found.</string>
+    <string name="no_local_playlists">No local playlists found. Add a music folder in settings.</string>
 </resources>
