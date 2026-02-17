@@ -26,6 +26,8 @@ import com.metrolist.music.db.entities.AlbumEntity
 import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.FormatEntity
+import com.metrolist.music.db.entities.LocalMusicFolder
+import com.metrolist.music.db.entities.LocalMusicScanResult
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.db.entities.PlayCountEntity
 import com.metrolist.music.db.entities.PlaylistEntity
@@ -100,14 +102,16 @@ class MusicDatabase(
         RelatedSongMap::class,
         SetVideoIdEntity::class,
         PlayCountEntity::class,
-        RecognitionHistory::class
+        RecognitionHistory::class,
+        LocalMusicFolder::class,
+        LocalMusicScanResult::class
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 32,
+    version = 33,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -140,6 +144,7 @@ class MusicDatabase(
         AutoMigration(from = 29, to = 30, spec = Migration29To30::class),
         AutoMigration(from = 30, to = 31),
         AutoMigration(from = 31, to = 32),
+        AutoMigration(from = 32, to = 33, spec = Migration32To33::class),
     ],
 )
 @TypeConverters(Converters::class)
@@ -703,5 +708,65 @@ class Migration29To30 : AutoMigrationSpec {
         if (!hasProvider) {
             db.execSQL("ALTER TABLE lyrics ADD COLUMN provider TEXT NOT NULL DEFAULT 'Unknown'")
         }
+    }
+}
+
+class Migration32To33 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase) {
+        // Add localPath column to song table if it doesn't exist
+        var hasLocalPath = false
+        db.query("PRAGMA table_info('song')").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            while (cursor.moveToNext()) {
+                val colName = if (nameIndex >= 0) cursor.getString(nameIndex) else null
+                if (colName == "localPath") {
+                    hasLocalPath = true
+                    break
+                }
+            }
+        }
+        if (!hasLocalPath) {
+            db.execSQL("ALTER TABLE song ADD COLUMN localPath TEXT DEFAULT NULL")
+        }
+
+        // Create local_music_folder table
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `local_music_folder` (
+                `id` TEXT NOT NULL,
+                `folderUri` TEXT NOT NULL,
+                `folderName` TEXT NOT NULL,
+                `displayPath` TEXT,
+                `lastScanned` INTEGER,
+                `songCount` INTEGER NOT NULL DEFAULT 0,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+
+        // Create local_music_scan_result table
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `local_music_scan_result` (
+                `id` TEXT NOT NULL,
+                `folderId` TEXT NOT NULL,
+                `scannedAt` INTEGER NOT NULL,
+                `songsAdded` INTEGER NOT NULL DEFAULT 0,
+                `songsRemoved` INTEGER NOT NULL DEFAULT 0,
+                `songsUpdated` INTEGER NOT NULL DEFAULT 0,
+                `songsSkipped` INTEGER NOT NULL DEFAULT 0,
+                `durationMs` INTEGER NOT NULL,
+                `errorMessage` TEXT,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`folderId`) REFERENCES `local_music_folder`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+
+        // Create indices for local_music_scan_result
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_local_music_scan_result_folderId` ON `local_music_scan_result` (`folderId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_local_music_scan_result_scannedAt` ON `local_music_scan_result` (`scannedAt`)")
     }
 }

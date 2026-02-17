@@ -35,6 +35,8 @@ import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.EventWithSong
 import com.metrolist.music.db.entities.FormatEntity
+import com.metrolist.music.db.entities.LocalMusicFolder
+import com.metrolist.music.db.entities.LocalMusicScanResult
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.db.entities.PlayCountEntity
 import com.metrolist.music.db.entities.Playlist
@@ -1598,4 +1600,57 @@ interface DatabaseDao {
     fun checkpoint() {
         raw("PRAGMA wal_checkpoint(FULL)".toSQLiteQuery())
     }
+
+    // ==================== Local Music DAO Methods ====================
+
+    @Query("SELECT * FROM local_music_folder WHERE isActive = 1 ORDER BY createdAt")
+    fun getActiveLocalMusicFolders(): Flow<List<LocalMusicFolder>>
+
+    @Query("SELECT * FROM local_music_folder ORDER BY createdAt")
+    fun getAllLocalMusicFolders(): Flow<List<LocalMusicFolder>>
+
+    @Query("SELECT * FROM local_music_folder WHERE id = :folderId")
+    fun getLocalMusicFolder(folderId: String): Flow<LocalMusicFolder?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(folder: LocalMusicFolder)
+
+    @Update
+    fun update(folder: LocalMusicFolder)
+
+    @Delete
+    fun delete(folder: LocalMusicFolder)
+
+    @Query("UPDATE local_music_folder SET isActive = :isActive WHERE id = :folderId")
+    fun setFolderActive(folderId: String, isActive: Boolean)
+
+    @Query("SELECT * FROM local_music_scan_result WHERE folderId = :folderId ORDER BY scannedAt DESC")
+    fun getScanResultsForFolder(folderId: String): Flow<List<LocalMusicScanResult>>
+
+    @Query("SELECT * FROM local_music_scan_result ORDER BY scannedAt DESC LIMIT :limit")
+    fun getRecentScanResults(limit: Int = 10): Flow<List<LocalMusicScanResult>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(scanResult: LocalMusicScanResult)
+
+    @Delete
+    fun delete(scanResult: LocalMusicScanResult)
+
+    @Query("DELETE FROM local_music_scan_result WHERE folderId = :folderId")
+    fun deleteScanResultsForFolder(folderId: String)
+
+    @Query("SELECT * FROM song WHERE isLocal = 1 ORDER BY title")
+    fun getLocalSongs(): Flow<List<Song>>
+
+    @Query("SELECT * FROM song WHERE localPath = :localPath LIMIT 1")
+    suspend fun getSongByLocalPath(localPath: String): Song?
+
+    @Query("SELECT * FROM song WHERE isLocal = 1 AND localPath LIKE :folderPath || '%'")
+    fun getSongsInFolder(folderPath: String): Flow<List<Song>>
+
+    @Query("UPDATE song SET isLocal = 0, localPath = NULL WHERE localPath = :localPath")
+    fun markSongAsRemoved(localPath: String)
+
+    @Query("DELETE FROM song WHERE isLocal = 1 AND isDownloaded = 0 AND inLibrary IS NULL AND liked = 0")
+    fun cleanupOrphanedLocalSongs()
 }
