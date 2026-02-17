@@ -2647,6 +2647,27 @@ class MusicService :
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
 
+            // Check if this is a local song and handle it separately
+            if (mediaId.startsWith("local_")) {
+                Timber.tag("MusicService").i("LOCAL FILE: $mediaId - fetching local path")
+                val song = runBlocking(Dispatchers.IO) {
+                    database.getSongById(mediaId)
+                }
+                val localPath = song?.song?.localPath
+                if (!localPath.isNullOrEmpty()) {
+                    val localUri = localPath.toUri()
+                    Timber.tag("MusicService").i("Playing local file: $localPath")
+                    return@Factory dataSpec.withUri(localUri)
+                } else {
+                    Timber.tag("MusicService").w("Local song $mediaId has no localPath set")
+                    throw PlaybackException(
+                        getString(R.string.local_file_not_found),
+                        null,
+                        PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND
+                    )
+                }
+            }
+
             // Check if we need to bypass cache for quality change
             val shouldBypassCache = bypassCacheForQualityChange.contains(mediaId)
 

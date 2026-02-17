@@ -170,21 +170,27 @@ Selected Folder: /Music
 ---
 
 ### Phase 6: Playback Integration 
-**Status:** ⏳ Pending
+**Status:** ✅ **COMPLETE**
 
-**Files to Modify:**
+**Files Modified:**
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/playback/MusicService.kt`
-  - Handle local file URIs in `onMediaItemTransition`
-  - Use `DefaultDataSource` for local files
+- [x] `app/src/main/kotlin/com/metrolist/music/playback/MusicService.kt`
+   - Handle local file URIs in `createDataSourceFactory`
+   - Check for `local_` prefix in media ID
+   - Use local path from SongEntity for playback
+   - Handle missing local path with error
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/extensions/MediaItemExt.kt` (MODIFY)
-  - Support creating MediaItem from local path
+- [x] `app/src/main/kotlin/com/metrolist/music/extensions/MediaItemExt.kt`
+   - Already handles local songs via media ID resolution in MusicService
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/ui/components/PlaybackSourceDialog.kt` (NEW)
-  - Dialog shown when song exists both locally and on YouTube Music
-  - Options: "Play Local", "Play from YouTube Music", "Remember my choice"
-  - If offline → Auto-play local without dialog
+- [x] `app/src/main/kotlin/com/metrolist/music/ui/component/PlaybackSourceDialog.kt` (NEW)
+   - Dialog shown when song exists both locally and on YouTube Music
+   - Options: "Play Local", "Play from YouTube Music", "Remember my choice"
+   - If offline → Auto-play local without dialog
+
+**Files Modified:**
+- [x] `app/src/main/res/values/metrolist_strings.xml`
+   - Added: local_file_not_found, choose_playback_source, play_local, play_streaming, remember_choice
 
 ---
 

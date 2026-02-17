@@ -739,6 +739,11 @@
     <string name="last_scan">Last Scan</string>
     <string name="scan_result_summary">%1$d added, %2$d updated, %3$d removed</string>
     <string name="folder_inaccessible">Folder no longer accessible</string>
+    <string name="local_file_not_found">Local file not found</string>
+    <string name="choose_playback_source">Choose Playback Source</string>
+    <string name="play_local">Play Local File</string>
+    <string name="play_streaming">Play from YouTube Music</string>
+    <string name="remember_choice">Remember my choice</string>
     <string name="local_music_info_title">Add Your Music</string>
     <string name="local_music_info_desc">Add folders from your device to play your local music collection. Each subfolder will become a playlist.</string>
     <string name="select_folder">Select Folder</string>
