@@ -47,6 +47,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.CONTENT_TYPE_HEADER
 import com.metrolist.music.constants.CONTENT_TYPE_SONG
 import com.metrolist.music.constants.HideExplicitKey
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.SongFilter
 import com.metrolist.music.constants.SongFilterKey
 import com.metrolist.music.constants.SongSortDescendingKey
@@ -91,6 +93,8 @@ fun LibrarySongsScreen(
 
     var filter by rememberEnumPreference(SongFilterKey, SongFilter.LIKED)
 
+    val contentFilter by rememberEnumPreference(LibraryContentFilterKey, LibraryContentFilter.ALL)
+
     LaunchedEffect(Unit) {
         if (ytmSync) {
             when (filter) {
@@ -115,11 +119,21 @@ fun LibrarySongsScreen(
         }
     }
 
-    val filteredSongs = if (hideExplicit) {
-        songs.filter { !it.song.explicit }
-    } else {
-        songs
-    }
+    val filteredSongs = songs
+        .filter { song ->
+            when (contentFilter) {
+                LibraryContentFilter.ALL -> true
+                LibraryContentFilter.LOCAL -> song.song.isLocal
+                LibraryContentFilter.ONLINE -> !song.song.isLocal
+            }
+        }
+        .filter { song ->
+            if (hideExplicit) {
+                !song.song.explicit
+            } else {
+                true
+            }
+        }
 
     Box(
         modifier = Modifier.fillMaxSize(),

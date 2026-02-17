@@ -48,7 +48,6 @@ import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
-import com.metrolist.music.ui.screens.localmusic.LocalMusicScreen
 import com.metrolist.music.ui.screens.settings.LocalMusicSettings
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
@@ -104,6 +103,12 @@ fun NavGraphBuilder.navigationBuilder(
         route = "listen_together_from_topbar",
     ) {
         ListenTogetherScreen(navController, showTopBar = true)
+    }
+
+    composable(
+        route = "listen_together_from_dialog",
+    ) {
+        ListenTogetherScreen(navController, showTopBar = false)
     }
 
     composable("history") {
@@ -400,9 +405,5 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("recognition_history") {
         RecognitionHistoryScreen(navController)
-    }
-
-    composable("local_music_browser") {
-        LocalMusicScreen(navController, scrollBehavior)
     }
 }

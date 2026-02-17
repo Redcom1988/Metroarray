@@ -55,6 +55,8 @@ import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
 import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.constants.PlaylistSortDescendingKey
 import com.metrolist.music.constants.PlaylistSortType
@@ -109,6 +111,8 @@ fun LibraryPlaylistsScreen(
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
     val playlists by viewModel.allPlaylists.collectAsState()
+
+    val contentFilter by rememberEnumPreference(LibraryContentFilterKey, LibraryContentFilter.ALL)
 
     val topSize by viewModel.topValue.collectAsState(initial = 50)
 
@@ -390,8 +394,16 @@ fun LibraryPlaylistsScreen(
                             }
                         }
 
+                        val filteredPlaylistsForList = playlists
+                            .filter { playlist ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> playlist.playlist.isLocal
+                                    LibraryContentFilter.ONLINE -> !playlist.playlist.isLocal
+                                }
+                            }
                         items(
-                            items = playlists.distinctBy { it.id },
+                            items = filteredPlaylistsForList.distinctBy { it.id },
                             key = { it.id },
                             contentType = { CONTENT_TYPE_PLAYLIST },
                         ) { playlist ->
@@ -549,13 +561,21 @@ fun LibraryPlaylistsScreen(
                     }
 
                     playlists.let { playlists ->
-                        if (playlists.isEmpty()) {
+                        val filteredPlaylistsForGrid = playlists
+                            .filter { playlist ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> playlist.playlist.isLocal
+                                    LibraryContentFilter.ONLINE -> !playlist.playlist.isLocal
+                                }
+                            }
+                        if (filteredPlaylistsForGrid.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
                             }
                         }
 
                         items(
-                            items = playlists.distinctBy { it.id },
+                            items = filteredPlaylistsForGrid.distinctBy { it.id },
                             key = { it.id },
                             contentType = { CONTENT_TYPE_PLAYLIST },
                         ) { playlist ->

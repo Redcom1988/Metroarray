@@ -132,8 +132,8 @@ class MetadataExtractor(
         val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "Unknown"
         return fileName
             .substringBeforeLast('.')
-            .replace('_', ' ')
-            .replace('-', ' - ')
+            .replace("_", " ")
+            .replace("-", " - ")
             .trim()
             .takeIf { it.isNotBlank() } ?: "Unknown"
     }

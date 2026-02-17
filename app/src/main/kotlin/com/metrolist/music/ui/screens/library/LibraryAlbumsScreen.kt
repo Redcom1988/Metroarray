@@ -60,6 +60,8 @@ import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
 import com.metrolist.music.constants.HideExplicitKey
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.constants.YtmSyncKey
 import com.metrolist.music.ui.component.ChipsRow
@@ -99,6 +101,8 @@ fun LibraryAlbumsScreen(
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+
+    val contentFilter by rememberEnumPreference(LibraryContentFilterKey, LibraryContentFilter.ALL)
 
     val filterContent = @Composable {
         Row {
@@ -240,11 +244,21 @@ fun LibraryAlbumsScreen(
                             }
                         }
 
-                        val filteredAlbumsForList = if (hideExplicit) {
-                            albums.filter { !it.album.explicit }
-                        } else {
-                            albums
-                        }
+                        val filteredAlbumsForList = albums
+                            .filter { album ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> album.album.isLocal
+                                    LibraryContentFilter.ONLINE -> !album.album.isLocal
+                                }
+                            }
+                            .filter { album ->
+                                if (hideExplicit) {
+                                    !album.album.explicit
+                                } else {
+                                    true
+                                }
+                            }
                         items(
                             items = filteredAlbumsForList.distinctBy { it.id },
                             key = { it.id },
@@ -299,11 +313,21 @@ fun LibraryAlbumsScreen(
                             }
                         }
 
-                        val filteredAlbumsForGrid = if (hideExplicit) {
-                            albums.filter { !it.album.explicit }
-                        } else {
-                            albums
-                        }
+                        val filteredAlbumsForGrid = albums
+                            .filter { album ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> album.album.isLocal
+                                    LibraryContentFilter.ONLINE -> !album.album.isLocal
+                                }
+                            }
+                            .filter { album ->
+                                if (hideExplicit) {
+                                    !album.album.explicit
+                                } else {
+                                    true
+                                }
+                            }
                         items(
                             items = filteredAlbumsForGrid.distinctBy { it.id },
                             key = { it.id },

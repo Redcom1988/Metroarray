@@ -12,6 +12,7 @@ import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.security.MessageDigest
@@ -70,43 +71,39 @@ class LocalMusicScanner(
      * Scans a folder and all its subfolders recursively.
      * Returns a flow of FolderScanResult for each folder containing audio files.
      */
-    suspend fun scanFolder(
-        folderUri: Uri,
-        onProgress: (String, Int) -> Unit = { _, _ -> }
-    ): Flow<FolderScanResult> = flow {
-        withContext(Dispatchers.IO) {
-            try {
-                val rootFolder = DocumentFile.fromTreeUri(context, folderUri)
-                    ?: throw IllegalArgumentException("Cannot access folder: $folderUri")
+    fun scanFolder(folderUri: Uri): Flow<FolderScanResult> = flow {
+        try {
+            val rootFolder = DocumentFile.fromTreeUri(context, folderUri)
+                ?: throw IllegalArgumentException("Cannot access folder: $folderUri")
 
-                if (!rootFolder.exists() || !rootFolder.isDirectory) {
-                    throw IllegalArgumentException("Invalid folder: $folderUri")
-                }
-
-                val rootFolderName = rootFolder.name ?: "Unknown"
-                scanFolderRecursive(
-                    rootFolder,
-                    rootFolderName,
-                    rootFolderName,
-                    emit,
-                    onProgress
-                )
-            } catch (e: Exception) {
-                Timber.e(e, "Error scanning folder: $folderUri")
-                throw e
+            if (!rootFolder.exists() || !rootFolder.isDirectory) {
+                throw IllegalArgumentException("Invalid folder: $folderUri")
             }
+
+            val rootFolderName = rootFolder.name ?: "Unknown"
+            val results = mutableListOf<FolderScanResult>()
+            scanFolderRecursiveInternal(
+                rootFolder,
+                rootFolderName,
+                rootFolderName,
+                results
+            )
+            results.forEach { emit(it) }
+        } catch (e: Exception) {
+            Timber.e(e, "Error scanning folder: $folderUri")
+            throw e
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
-     * Recursively scans a folder and emits results for folders containing audio files
+     * Recursively scans a folder and collects results
      */
-    private suspend fun scanFolderRecursive(
+    private fun scanFolderRecursiveInternal(
         folder: DocumentFile,
         rootName: String,
         currentPath: String,
-        emit: suspend (FolderScanResult) -> Unit,
-        onProgress: (String, Int) -> Unit
+        results: MutableList<FolderScanResult>,
+        onProgress: (String, Int) -> Unit = { _, _ -> }
     ) {
         val audioFiles = mutableListOf<LocalAudioFile>()
         val subfolders = mutableListOf<String>()
@@ -119,7 +116,7 @@ class LocalMusicScanner(
                     subfolders.add(subfolderName)
 
                     // Recursively scan subfolder
-                    scanFolderRecursive(file, rootName, newPath, emit, onProgress)
+                    scanFolderRecursiveInternal(file, rootName, newPath, results, onProgress)
                 }
                 file.isFile && isAudioFile(file) -> {
                     val audioFile = createAudioFile(file, currentPath)
@@ -129,10 +126,10 @@ class LocalMusicScanner(
             }
         }
 
-        // Emit result if this folder contains audio files
+        // Add result if this folder contains audio files
         if (audioFiles.isNotEmpty()) {
             val folderName = folder.name ?: "Unknown"
-            emit(
+            results.add(
                 FolderScanResult(
                     folderName = folderName,
                     folderPath = currentPath,

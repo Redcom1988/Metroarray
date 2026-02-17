@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -85,13 +86,6 @@ fun LocalMusicSettings(
             coroutineScope.launch {
                 viewModel.addFolder(it)
             }
-        }
-    }
-
-    // Auto-scan on first load if folders exist but no scan results
-    LaunchedEffect(folders) {
-        if (folders.isNotEmpty() && scanResults.isEmpty() && !isScanning) {
-            viewModel.refreshAllFolders()
         }
     }
 
@@ -213,6 +207,8 @@ fun LocalMusicSettings(
             )
         )
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Scan Progress
         if (isScanning) {
             Material3SettingsGroup(
@@ -243,6 +239,8 @@ fun LocalMusicSettings(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Last Scan Results
         if (scanResults.isNotEmpty() && !isScanning) {
             Material3SettingsGroup(
@@ -266,6 +264,8 @@ fun LocalMusicSettings(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Watched Folders
         if (folders.isNotEmpty()) {
             Material3SettingsGroup(
@@ -273,7 +273,7 @@ fun LocalMusicSettings(
                 items = folders.map { folder ->
                     val lastScanned = folder.lastScanned
                     Material3SettingsItem(
-                        icon = painterResource(R.drawable.folder),
+                        icon = painterResource(R.drawable.storage),
                         title = { Text(folder.folderName) },
                         description = {
                             Column {
@@ -310,7 +310,8 @@ fun LocalMusicSettings(
                                         coroutineScope.launch {
                                             viewModel.refreshFolder(folder.id)
                                         }
-                                    }
+                                    },
+                                    onLongClick = {}
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.refresh),
@@ -318,7 +319,8 @@ fun LocalMusicSettings(
                                     )
                                 }
                                 IconButton(
-                                    onClick = { folderToRemove = folder.id }
+                                    onClick = { folderToRemove = folder.id },
+                                    onLongClick = {}
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.close),
@@ -333,6 +335,8 @@ fun LocalMusicSettings(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Actions
         if (folders.isNotEmpty()) {
             Material3SettingsGroup(
@@ -346,6 +350,8 @@ fun LocalMusicSettings(
                 )
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Info
         if (folders.isEmpty()) {

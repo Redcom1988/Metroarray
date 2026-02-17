@@ -54,6 +54,8 @@ import com.metrolist.music.constants.CONTENT_TYPE_PLAYLIST
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.constants.MixSortDescendingKey
 import com.metrolist.music.constants.MixSortType
@@ -112,6 +114,8 @@ fun LibraryMixScreen(
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
+
+    val contentFilter by rememberEnumPreference(LibraryContentFilterKey, LibraryContentFilter.ALL)
 
     val topSize by viewModel.topValue.collectAsState(initial = 50)
     val likedPlaylist =
@@ -174,7 +178,29 @@ fun LibraryMixScreen(
     val artist = viewModel.artists.collectAsState()
     val playlist = viewModel.playlists.collectAsState()
 
-    var allItems = albums.value + artist.value + playlist.value
+    val filteredAlbums = albums.value.filter { album ->
+        when (contentFilter) {
+            LibraryContentFilter.ALL -> true
+            LibraryContentFilter.LOCAL -> album.album.isLocal
+            LibraryContentFilter.ONLINE -> !album.album.isLocal
+        }
+    }
+    val filteredArtists = artist.value.filter { artistItem ->
+        when (contentFilter) {
+            LibraryContentFilter.ALL -> true
+            LibraryContentFilter.LOCAL -> artistItem.artist.isLocal
+            LibraryContentFilter.ONLINE -> !artistItem.artist.isLocal
+        }
+    }
+    val filteredPlaylists = playlist.value.filter { playlistItem ->
+        when (contentFilter) {
+            LibraryContentFilter.ALL -> true
+            LibraryContentFilter.LOCAL -> playlistItem.playlist.isLocal
+            LibraryContentFilter.ONLINE -> !playlistItem.playlist.isLocal
+        }
+    }
+
+    var allItems = filteredAlbums + filteredArtists + filteredPlaylists
     val collator = Collator.getInstance(Locale.getDefault())
     collator.strength = Collator.PRIMARY
     allItems =

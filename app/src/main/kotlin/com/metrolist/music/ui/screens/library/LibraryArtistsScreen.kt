@@ -58,6 +58,8 @@ import com.metrolist.music.constants.CONTENT_TYPE_HEADER
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.constants.YtmSyncKey
 import com.metrolist.music.ui.component.ChipsRow
@@ -92,6 +94,8 @@ fun LibraryArtistsScreen(
     val (sortDescending, onSortDescendingChange) = rememberPreference(ArtistSortDescendingKey, true)
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
+
+    val contentFilter by rememberEnumPreference(LibraryContentFilterKey, LibraryContentFilter.ALL)
 
     val filterContent = @Composable {
         Row {
@@ -233,8 +237,16 @@ fun LibraryArtistsScreen(
                             }
                         }
 
+                        val filteredArtistsForList = artists
+                            .filter { artist ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> artist.artist.isLocal
+                                    LibraryContentFilter.ONLINE -> !artist.artist.isLocal
+                                }
+                            }
                         items(
-                            items = artists.distinctBy { it.id },
+                            items = filteredArtistsForList.distinctBy { it.id },
                             key = { it.id },
                             contentType = { CONTENT_TYPE_ARTIST },
                         ) { artist ->
@@ -285,8 +297,16 @@ fun LibraryArtistsScreen(
                             }
                         }
 
+                        val filteredArtistsForGrid = artists
+                            .filter { artist ->
+                                when (contentFilter) {
+                                    LibraryContentFilter.ALL -> true
+                                    LibraryContentFilter.LOCAL -> artist.artist.isLocal
+                                    LibraryContentFilter.ONLINE -> !artist.artist.isLocal
+                                }
+                            }
                         items(
-                            items = artists.distinctBy { it.id },
+                            items = filteredArtistsForGrid.distinctBy { it.id },
                             key = { it.id },
                             contentType = { CONTENT_TYPE_ARTIST },
                         ) { artist ->

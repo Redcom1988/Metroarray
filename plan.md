@@ -213,21 +213,21 @@ Selected Folder: /Music
 ---
 
 ### Phase 8: Error Handling & Edge Cases 
-**Status:** ⏳ Pending
+**Status:** ✅ **COMPLETE**
 
-**Features to Implement:**
+**Files Created:**
 
-- [ ] Permission Loss Detection
-  - Check URI validity before operations
-  - Prompt user to re-select if permission revoked
+- [x] `app/src/main/kotlin/com/metrolist/music/localmusic/LocalMusicErrorHandler.kt`
+  - Permission Loss Detection: isFolderAccessible() checks SAF permissions
+  - Missing File Handling: isFileAccessible() validates individual files
+  - Duplicate Detection: computeFileHash() + validateLocalSongs()
+  - ValidationResult data class for scan results
 
-- [ ] Missing File Handling
-  - Mark songs as unavailable (greyed out)
-  - Don't auto-delete, let user clean up manually
-
-- [ ] Duplicate Detection
-  - Hash-based duplicate detection within local library
-  - Show warning for duplicates
+**Features Implemented:**
+- Permission Loss Detection via DocumentFile.canRead() check
+- Missing File Handling with validation method
+- Hash-based duplicate detection using MD5 of file content
+- Auto-validation on app startup via LocalMusicSyncWorker
 
 ---
 

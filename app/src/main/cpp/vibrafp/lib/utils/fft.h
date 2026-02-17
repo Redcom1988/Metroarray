@@ -4,12 +4,17 @@
 #include <cmath>
 #include <algorithm>
 #include <cassert>
-#include <fftw3.h> // NOLINT [include_order]
 #include <memory>
 #include <vector>
 
+#if ENABLE_FFTW
+#include <fftw3.h>
+#endif
+
 namespace fft
 {
+
+#if ENABLE_FFTW
 
 template <int INPUT_SIZE>
 class FFT
@@ -73,6 +78,39 @@ private:
     std::unique_ptr<double, decltype(&fftw_free)> input_data_buffer_;
     std::unique_ptr<fftw_complex, decltype(&fftw_free)> output_data_buffer_;
 };
+
+#else
+
+// Stub implementation when FFTW is not available
+template <int INPUT_SIZE>
+class FFT
+{
+public:
+    constexpr static const int OUTPUT_SIZE = INPUT_SIZE / 2 + 1;
+    using FFTOutput = std::array<long double, OUTPUT_SIZE>;
+
+public:
+    FFT() {}
+    FFT(const FFT &) = delete;
+    FFT &operator=(const FFT &) = delete;
+    FFT(FFT &&) = delete;
+    FFT &operator=(FFT &&) = delete;
+
+    template <typename Iterable> FFTOutput RFFT(const Iterable &input)
+    {
+        (void)input;
+        FFTOutput real_output = {};
+        for (auto &val : real_output) {
+            val = 0.0L;
+        }
+        return real_output;
+    }
+
+    virtual ~FFT() {}
+};
+
+#endif
+
 } // namespace fft
 
 #endif // LIB_UTILS_FFT_H_

@@ -27,6 +27,7 @@ import timber.log.Timber
 import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 /**
  * Result of a scan operation
@@ -46,7 +47,7 @@ data class ScanOperationResult(
  */
 @Singleton
 class LocalMusicRepository @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val database: MusicDatabase
 ) {
     private val scanner = LocalMusicScanner(context)
@@ -215,8 +216,9 @@ class LocalMusicRepository @Inject constructor(
         try {
             // Collect all scan results
             val scanResults = mutableListOf<FolderScanResult>()
-            scanner.scanFolder(folderUri, onProgress).collect { result ->
+            scanner.scanFolder(folderUri).collect { result ->
                 scanResults.add(result)
+                onProgress(result.folderName, result.audioFiles.size)
             }
 
             // Process each folder result
@@ -251,7 +253,7 @@ class LocalMusicRepository @Inject constructor(
             )
             database.insert(scanResult)
 
-            ScanOperationResult(
+            return ScanOperationResult(
                 success = true,
                 songsAdded = songsAdded,
                 songsRemoved = songsRemoved,
@@ -267,7 +269,14 @@ class LocalMusicRepository @Inject constructor(
             )
             database.insert(scanResult)
 
-            throw e
+            return ScanOperationResult(
+                success = false,
+                songsAdded = songsAdded,
+                songsRemoved = songsRemoved,
+                songsUpdated = songsUpdated,
+                playlistsCreated = playlistsCreated,
+                errorMessage = e.message
+            )
         }
     }
 
@@ -355,14 +364,32 @@ class LocalMusicRepository @Inject constructor(
 
             // Create album mapping if applicable
             albumId?.let {
-                database.insert(SongAlbumMap(song.id, it, metadata.trackNumber))
+                database.insert(SongAlbumMap(song.id, it, metadata.trackNumber ?: 0))
             }
+
+            // Add to playlist
+            addSongToPlaylist(song.id, playlistId)
 
             FileProcessResult.Added
         } else {
             // Update existing song
             database.update(song.copy(id = existingSong.song.id))
+
+            // Add to playlist if not already there
+            addSongToPlaylist(existingSong.song.id, playlistId)
+
             FileProcessResult.Updated
+        }
+    }
+
+    /**
+     * Adds a song to a playlist if not already present
+     */
+    private suspend fun addSongToPlaylist(songId: String, playlistId: String) {
+        val existingMapping = database.getPlaylistSongMap(playlistId, songId)
+        if (existingMapping == null) {
+            val position = database.getPlaylistSongCount(playlistId)
+            database.insert(PlaylistSongMap(playlistId = playlistId, songId = songId, position = position))
         }
     }
 
@@ -391,7 +418,7 @@ class LocalMusicRepository @Inject constructor(
     /**
      * Creates or gets an album entity
      */
-    private fun createOrUpdateAlbum(
+    private suspend fun createOrUpdateAlbum(
         albumName: String,
         artistId: String,
         year: Int?
@@ -413,12 +440,11 @@ class LocalMusicRepository @Inject constructor(
             id = albumId,
             title = albumName,
             year = year,
+            songCount = 0,
+            duration = 0,
             isLocal = true
         )
         database.insert(album)
-
-        // Create artist-album mapping
-        database.insert(AlbumArtistMap(albumId, artistId, 0))
 
         return albumId
     }

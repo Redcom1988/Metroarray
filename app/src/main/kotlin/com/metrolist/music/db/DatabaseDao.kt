@@ -940,25 +940,25 @@ interface DatabaseDao {
     fun albumArtistMaps(albumId: String): List<AlbumArtistMap>
 
     @Transaction
-    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY rowId")
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL OR isLocal = 1 ORDER BY rowId")
     fun playlistsByCreateDateAsc(): Flow<List<Playlist>>
 
     @Transaction
     @Query(
-        "SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY lastUpdateTime",
+        "SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL OR isLocal = 1 ORDER BY lastUpdateTime",
     )
     fun playlistsByUpdatedDateAsc(): Flow<List<Playlist>>
 
     @Transaction
-    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY name")
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL OR isLocal = 1 ORDER BY name")
     fun playlistsByNameAsc(): Flow<List<Playlist>>
 
     @Transaction
-    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE isEditable AND bookmarkedAt IS NOT NULL ORDER BY name")
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE isEditable AND (bookmarkedAt IS NOT NULL OR isLocal = 1) ORDER BY name")
     fun editablePlaylistsByNameAsc(): Flow<List<Playlist>>
 
     @Transaction
-    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY songCount")
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL OR isLocal = 1 ORDER BY songCount")
     fun playlistsBySongCountAsc(): Flow<List<Playlist>>
 
     fun playlists(
@@ -1015,6 +1015,12 @@ interface DatabaseDao {
             )
         }
     }
+
+    @Query("SELECT * FROM playlist_song_map WHERE playlistId = :playlistId AND songId = :songId LIMIT 1")
+    suspend fun getPlaylistSongMap(playlistId: String, songId: String): PlaylistSongMap?
+
+    @Query("SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = :playlistId")
+    suspend fun getPlaylistSongCount(playlistId: String): Int
 
     fun downloadedSongs(
         sortType: SongSortType,

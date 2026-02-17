@@ -132,6 +132,8 @@ import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
+import com.metrolist.music.constants.LibraryContentFilter
+import com.metrolist.music.constants.LibraryContentFilterKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.constants.NavigationBarAnimationSpec
@@ -794,25 +796,41 @@ class MainActivity : ComponentActivity() {
                                             )
                                         },
                                         actions = {
+                                            val (contentFilter, setContentFilter) = rememberEnumPreference(
+                                                LibraryContentFilterKey,
+                                                LibraryContentFilter.ALL
+                                            )
+                                            if (currentRoute == Screens.Library.route) {
+                                                IconButton(
+                                                    onClick = {
+                                                        setContentFilter(
+                                                            when (contentFilter) {
+                                                                LibraryContentFilter.ALL -> LibraryContentFilter.LOCAL
+                                                                LibraryContentFilter.LOCAL -> LibraryContentFilter.ONLINE
+                                                                LibraryContentFilter.ONLINE -> LibraryContentFilter.ALL
+                                                            }
+                                                        )
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        painter = when (contentFilter) {
+                                                            LibraryContentFilter.ALL -> painterResource(R.drawable.library_music)
+                                                            LibraryContentFilter.LOCAL -> painterResource(R.drawable.storage)
+                                                            LibraryContentFilter.ONLINE -> painterResource(R.drawable.cloud)
+                                                        },
+                                                        contentDescription = when (contentFilter) {
+                                                            LibraryContentFilter.ALL -> stringResource(R.string.filter_all)
+                                                            LibraryContentFilter.LOCAL -> stringResource(R.string.filter_local)
+                                                            LibraryContentFilter.ONLINE -> stringResource(R.string.filter_online)
+                                                        }
+                                                    )
+                                                }
+                                            }
                                             if (showHistoryButton) {
                                                 IconButton(onClick = { navController.navigate("history") }) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.history),
                                                         contentDescription = stringResource(R.string.history)
-                                                    )
-                                                }
-                                            }
-                                            IconButton(onClick = { navController.navigate("stats") }) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.stats),
-                                                    contentDescription = stringResource(R.string.stats)
-                                                )
-                                            }
-                                            if (listenTogetherInTopBar) {
-                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.group_outlined),
-                                                        contentDescription = stringResource(R.string.together)
                                                     )
                                                 }
                                             }

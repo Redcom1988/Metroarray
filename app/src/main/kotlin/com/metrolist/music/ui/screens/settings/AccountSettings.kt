@@ -318,6 +318,38 @@ fun AccountSettings(
 
             Spacer(Modifier.height(4.dp))
 
+            PreferenceEntry(
+                title = { Text(stringResource(R.string.stats)) },
+                icon = {
+                    Icon(painterResource(R.drawable.stats), contentDescription = null)
+                },
+                onClick = {
+                    onClose()
+                    navController.navigate("stats")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            PreferenceEntry(
+                title = { Text(stringResource(R.string.listen_together)) },
+                icon = {
+                    Icon(painterResource(R.drawable.group_outlined), contentDescription = null)
+                },
+                onClick = {
+                    onClose()
+                    navController.navigate("listen_together_from_dialog")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+            )
+
+            Spacer(Modifier.height(4.dp))
+
             if (latestVersionName != BuildConfig.VERSION_NAME) {
                 val releaseInfo = Updater.getCachedLatestRelease()
                 val downloadUrl = releaseInfo?.let { Updater.getDownloadUrlForCurrentVariant(it) }
