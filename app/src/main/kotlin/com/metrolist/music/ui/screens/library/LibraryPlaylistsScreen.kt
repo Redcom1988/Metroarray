@@ -293,7 +293,7 @@ fun LibraryPlaylistsScreen(
                         headerContent()
                     }
 
-                    if (showLiked) {
+                    if (showLiked && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "likedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -312,7 +312,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showDownloaded) {
+                    if (showDownloaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "downloadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -331,7 +331,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showTop) {
+                    if (showTop && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "TopPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -350,7 +350,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showCached) {
+                    if (showCached && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "cachePlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -369,7 +369,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
                     
-                    if (showUploaded) {
+                    if (showUploaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "uploadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -452,7 +452,7 @@ fun LibraryPlaylistsScreen(
                         headerContent()
                     }
 
-                    if (showLiked) {
+                    if (showLiked && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "likedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -474,7 +474,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showDownloaded) {
+                    if (showDownloaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "downloadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -496,7 +496,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showTop) {
+                    if (showTop && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "TopPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -518,7 +518,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showCached) {
+                    if (showCached && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "cachePlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -540,7 +540,7 @@ fun LibraryPlaylistsScreen(
                         }
                     }
 
-                    if (showUploaded) {
+                    if (showUploaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "uploadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },

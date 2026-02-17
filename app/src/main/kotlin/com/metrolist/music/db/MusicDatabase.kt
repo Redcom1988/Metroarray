@@ -111,7 +111,7 @@ class MusicDatabase(
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 33,
+    version = 34,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -145,6 +145,7 @@ class MusicDatabase(
         AutoMigration(from = 30, to = 31),
         AutoMigration(from = 31, to = 32),
         AutoMigration(from = 32, to = 33, spec = Migration32To33::class),
+        AutoMigration(from = 33, to = 34, spec = Migration33To34::class),
     ],
 )
 @TypeConverters(Converters::class)
@@ -768,5 +769,25 @@ class Migration32To33 : AutoMigrationSpec {
         // Create indices for local_music_scan_result
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_local_music_scan_result_folderId` ON `local_music_scan_result` (`folderId`)")
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_local_music_scan_result_scannedAt` ON `local_music_scan_result` (`scannedAt`)")
+    }
+}
+
+class Migration33To34 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase) {
+        // Add localFolderUri column to playlist table if it doesn't exist
+        var hasLocalFolderUri = false
+        db.query("PRAGMA table_info('playlist')").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            while (cursor.moveToNext()) {
+                val colName = if (nameIndex >= 0) cursor.getString(nameIndex) else null
+                if (colName == "localFolderUri") {
+                    hasLocalFolderUri = true
+                    break
+                }
+            }
+        }
+        if (!hasLocalFolderUri) {
+            db.execSQL("ALTER TABLE playlist ADD COLUMN localFolderUri TEXT DEFAULT NULL")
+        }
     }
 }

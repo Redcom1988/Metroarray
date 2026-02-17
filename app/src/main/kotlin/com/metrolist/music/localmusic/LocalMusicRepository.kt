@@ -312,20 +312,26 @@ class LocalMusicRepository @Inject constructor(
             folderResult.folderName
         }
 
-        // Check if playlist already exists for this folder
-        val existingPlaylists = database.playlistsByNameAsc().first()
-        val existingPlaylist = existingPlaylists.find { it.playlist.name == playlistName && it.playlist.isLocal }
+        // Check if playlist already exists for this folder by folderUri
+        val existingPlaylist = database.getLocalPlaylistByFolderUri(parentFolder.folderUri)
 
         return if (existingPlaylist != null) {
+            // Update playlist name in case it changed (but keep the same playlist)
+            if (existingPlaylist.playlist.name != playlistName) {
+                database.query {
+                    update(existingPlaylist.playlist.copy(name = playlistName))
+                }
+            }
             // Clear existing songs from this playlist (will be repopulated)
             database.clearPlaylist(existingPlaylist.playlist.id)
             existingPlaylist.playlist.id
         } else {
-            // Create new playlist
+            // Create new playlist with folderUri reference
             val playlist = PlaylistEntity(
                 name = playlistName,
                 isEditable = true,
-                isLocal = true
+                isLocal = true,
+                localFolderUri = parentFolder.folderUri
             )
             database.insert(playlist)
             playlist.id

@@ -337,7 +337,7 @@ fun LibraryMixScreen(
                         headerContent()
                     }
 
-                    if (showLiked) {
+                    if (showLiked && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "likedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -356,7 +356,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showDownloaded) {
+                    if (showDownloaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "downloadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -375,7 +375,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showTop) {
+                    if (showTop && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "TopPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -394,7 +394,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showCached) {
+                    if (showCached && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "cachePlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -413,7 +413,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showUploaded) {
+                    if (showUploaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "uploadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -599,7 +599,7 @@ fun LibraryMixScreen(
                         headerContent()
                     }
 
-                    if (showLiked) {
+                    if (showLiked && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "likedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -621,7 +621,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showDownloaded) {
+                    if (showDownloaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "downloadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -643,7 +643,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showTop) {
+                    if (showTop && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "TopPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -665,7 +665,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showCached) {
+                    if (showCached && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "cachePlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },
@@ -687,7 +687,7 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showUploaded) {
+                    if (showUploaded && contentFilter != LibraryContentFilter.LOCAL) {
                         item(
                             key = "uploadedPlaylist",
                             contentType = { CONTENT_TYPE_PLAYLIST },

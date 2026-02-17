@@ -961,6 +961,10 @@ interface DatabaseDao {
     @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL OR isLocal = 1 ORDER BY songCount")
     fun playlistsBySongCountAsc(): Flow<List<Playlist>>
 
+    @Transaction
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE isLocal = 1 AND localFolderUri = :folderUri LIMIT 1")
+    suspend fun getLocalPlaylistByFolderUri(folderUri: String): Playlist?
+
     fun playlists(
         sortType: PlaylistSortType,
         descending: Boolean,
@@ -1617,6 +1621,9 @@ interface DatabaseDao {
 
     @Query("SELECT * FROM local_music_folder WHERE id = :folderId")
     fun getLocalMusicFolder(folderId: String): Flow<LocalMusicFolder?>
+
+    @Query("SELECT * FROM local_music_folder WHERE folderUri = :folderUri LIMIT 1")
+    suspend fun getLocalMusicFolderByUri(folderUri: String): LocalMusicFolder?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(folder: LocalMusicFolder)

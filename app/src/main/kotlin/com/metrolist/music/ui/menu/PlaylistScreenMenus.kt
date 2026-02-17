@@ -89,6 +89,7 @@ fun LocalPlaylistMenu(
     }
 
     val isYouTubePlaylist = playlist.playlist.browseId != null
+    val isLocalFolderPlaylist = playlist.playlist.localFolderUri != null
 
     val menuItems = buildList {
         add(
@@ -147,35 +148,37 @@ fun LocalPlaylistMenu(
             )
         }
 
-        add(downloadMenuItem)
+        // Only show download for non-local-folder playlists
+        if (!isLocalFolderPlaylist) {
+            add(downloadMenuItem)
+        }
 
-        add(
-            Material3MenuItemData(
-                title = { Text(stringResource(R.string.share)) },
-                description = { Text(stringResource(R.string.share_playlist_desc)) },
-                icon = {
-                    Icon(
-                        painter = painterResource(R.drawable.share),
-                        contentDescription = null
-                    )
-                },
-                onClick = {
-                    val shareText = if (isYouTubePlaylist) {
-                        "https://music.youtube.com/playlist?list=${playlist.playlist.browseId}"
-                    } else {
-                        songs.joinToString("\n") { it.song.song.title }
+        // Only show share for YouTube playlists, not local folder playlists
+        if (isYouTubePlaylist) {
+            add(
+                Material3MenuItemData(
+                    title = { Text(stringResource(R.string.share)) },
+                    description = { Text(stringResource(R.string.share_playlist_desc)) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.share),
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        val shareText = "https://music.youtube.com/playlist?list=${playlist.playlist.browseId}"
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                        onDismiss()
                     }
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, shareText)
-                        type = "text/plain"
-                    }
-                    val shareIntent = Intent.createChooser(sendIntent, null)
-                    context.startActivity(shareIntent)
-                    onDismiss()
-                }
+                )
             )
-        )
+        }
 
         add(
             Material3MenuItemData(

@@ -366,15 +366,17 @@ fun LocalPlaylistScreen(
     var showDeletePlaylistDialog by remember {
         mutableStateOf(false)
     }
+    val isLocalFolderPlaylist = playlist?.playlist?.localFolderUri != null
     if (showDeletePlaylistDialog) {
         DefaultDialog(
             onDismiss = { showDeletePlaylistDialog = false },
             content = {
                 Text(
-                    text = stringResource(
-                        R.string.delete_playlist_confirm,
-                        playlist?.playlist!!.name
-                    ),
+                    text = if (isLocalFolderPlaylist) {
+                        stringResource(R.string.remove_folder_confirm, playlist?.playlist!!.name)
+                    } else {
+                        stringResource(R.string.delete_playlist_confirm, playlist?.playlist!!.name)
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 18.dp)
                 )
@@ -390,10 +392,17 @@ fun LocalPlaylistScreen(
                 TextButton(
                     onClick = {
                         showDeletePlaylistDialog = false
-                        database.query {
-                            playlist?.let { delete(it.playlist) }
-                        }
                         viewModel.viewModelScope.launch(Dispatchers.IO) {
+                            // For local folder playlists, revoke folder access first
+                            if (isLocalFolderPlaylist) {
+                                playlist?.playlist?.localFolderUri?.let { folderUri ->
+                                    val folder = database.getLocalMusicFolderByUri(folderUri)
+                                    folder?.let { database.delete(it) }
+                                }
+                            }
+                            database.query {
+                                playlist?.let { delete(it.playlist) }
+                            }
                             playlist?.playlist?.browseId?.let { YouTube.deletePlaylist(it) }
                         }
                         navController.popBackStack()
