@@ -55,24 +55,27 @@ Implementation of local music playback support using Storage Access Framework (S
 ---
 
 ### Phase 2: Media Scanning 
-**Status:** ⏳ Pending
+**Status:** ✅ **COMPLETE**
 
-**Files to Create:**
+**Files Created:**
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/localmusic/LocalMusicScanner.kt`
-  - Scan folders using `DocumentFile` from SAF
-  - Recursively find audio files (MP3, M4A, FLAC, OGG, WAV, OPUS, AAC)
-  - Generate unique IDs for songs: `local_<file_hash>`
+- [x] `app/src/main/kotlin/com/metrolist/music/localmusic/LocalMusicScanner.kt`
+  - Scans folders using `DocumentFile` from SAF
+  - Recursively finds audio files (MP3, M4A, FLAC, OGG, WAV, OPUS, AAC)
+  - Generates unique IDs for songs: `local_<file_hash>`
+  - Returns `Flow<FolderScanResult>` for reactive processing
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/localmusic/MetadataExtractor.kt`
-  - Use `MediaMetadataRetriever` for metadata
-  - Extract: title, artist, album, track number, duration, year, genre
-  - Extract embedded album art
+- [x] `app/src/main/kotlin/com/metrolist/music/localmusic/MetadataExtractor.kt`
+  - Uses `MediaMetadataRetriever` for metadata extraction
+  - Extracts: title, artist, album, track number, duration, year, genre, embedded art
+  - Handles fallback to filename for missing titles
+  - Batch processing support with progress callbacks
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/localmusic/LocalMusicRepository.kt`
-  - Coordinate between scanner and database
-  - Handle folder-to-playlist mapping
-  - Track changes between scans
+- [x] `app/src/main/kotlin/com/metrolist/music/localmusic/LocalMusicRepository.kt`
+  - Coordinates between scanner, metadata extractor, and database
+  - Handles folder-to-playlist mapping (subfolders become playlists)
+  - Provides methods: addFolder, removeFolder, refreshFolder, refreshAllFolders
+  - Tracks scan statistics and saves results
 
 **Folder Structure Logic:**
 ```
