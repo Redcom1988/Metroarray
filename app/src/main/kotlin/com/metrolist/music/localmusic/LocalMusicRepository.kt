@@ -99,11 +99,11 @@ class LocalMusicRepository @Inject constructor(
     }
 
     /**
-     * Removes a music folder and optionally cleans up associated data
+     * Removes a music folder and cleans up all associated data
      */
     suspend fun removeMusicFolder(
         folderId: String,
-        removeSongs: Boolean = false
+        removeSongs: Boolean = true
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val folder = database.getLocalMusicFolder(folderId).first()
@@ -111,9 +111,27 @@ class LocalMusicRepository @Inject constructor(
                     IllegalArgumentException("Folder not found: $folderId")
                 )
 
+            // Get all local songs from this folder
+            val songs = database.getSongsInFolder(folder.folderUri).first()
+            
+            // Delete local playlists - find playlists whose songs are all from this folder
+            val localPlaylists = database.playlistsByNameAsc().first()
+                .filter { it.playlist.isLocal }
+            
+            // Check each local playlist and delete if all its songs are from this folder
+            localPlaylists.forEach { playlist ->
+                val playlistSongs = database.playlistSongs(playlist.playlist.id).first()
+                val allSongsFromFolder = playlistSongs.all { song ->
+                    song.song.song.localPath?.startsWith(folder.folderUri) == true
+                }
+                if (allSongsFromFolder || playlistSongs.isEmpty()) {
+                    database.clearPlaylist(playlist.playlist.id)
+                    database.delete(playlist.playlist)
+                }
+            }
+
+            // Mark songs as removed (not local anymore)
             if (removeSongs) {
-                // Get all local songs from this folder and mark them as removed
-                val songs = database.getSongsInFolder(folder.folderUri).first()
                 songs.forEach { song ->
                     database.markSongAsRemoved(song.song.localPath ?: "")
                 }
