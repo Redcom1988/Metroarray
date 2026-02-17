@@ -115,25 +115,30 @@ Selected Folder: /Music
 ---
 
 ### Phase 4: Settings UI 
-**Status:** ⏳ Pending
+**Status:** ✅ **COMPLETE**
 
-**Files to Create/Modify:**
+**Files Created/Modified:**
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/ui/screens/settings/LocalMusicSettings.kt` (NEW)
-  - "Add Music Folder" button → Launches `Intent.ACTION_OPEN_DOCUMENT_TREE`
-  - List of added folders with:
-    - Folder name
-    - Song count
-    - Last scanned time
-    - Remove button
-  - "Refresh Now" button
-  - "Rescan All" button
+- [x] `app/src/main/kotlin/com/metrolist/music/ui/screens/settings/LocalMusicSettings.kt` (NEW)
+  - Uses SAF folder picker (`ActivityResultContracts.OpenDocumentTree()`)
+  - Displays list of watched folders with song count and last scan time
+  - Shows scan progress with CircularProgressIndicator
+  - Displays last scan results summary
+  - Actions: Add Folder, Refresh, Rescan All, Remove Folder
+  - Dialogs for confirmation and info
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/ui/screens/NavigationBuilder.kt` (MODIFY)
-  - Add navigation route for local music settings
+- [x] `app/src/main/kotlin/com/metrolist/music/viewmodels/LocalMusicSettingsViewModel.kt` (NEW)
+  - HiltViewModel for managing UI state
+  - Methods: addFolder(), removeFolder(), refreshFolder(), refreshAllFolders()
+  - State flows: folders, isScanning, scanProgress, lastScanResults
 
-- [ ] `app/src/main/kotlin/com/metrolist/music/ui/screens/settings/SettingsScreen.kt` (MODIFY)
-  - Add "Local Music" section in storage settings
+- [x] `app/src/main/kotlin/com/metrolist/music/ui/screens/NavigationBuilder.kt` (MODIFY)
+  - Added route "settings/local_music" for LocalMusicSettings
+  - Added import for LocalMusicSettings
+
+- [x] `app/src/main/kotlin/com/metrolist/music/ui/screens/settings/SettingsScreen.kt` (MODIFY)
+  - Added "Local Music" option in Storage & Data section
+  - Navigates to "settings/local_music" on click
 
 ---
 
@@ -202,14 +207,20 @@ Selected Folder: /Music
 
 ## String Resources
 
-Add to `metrolist_strings.xml`:
+✅ **Added to `metrolist_strings.xml`:**
 ```xml
 <string name="local_music">Local Music</string>
 <string name="local_music_folders">Music Folders</string>
 <string name="add_music_folder">Add Music Folder</string>
+<string name="add_music_folder_desc">Select a folder containing your music files. Subfolders will be converted to playlists automatically.</string>
+<string name="add_music_folder_desc_short">Import music from device storage</string>
 <string name="remove_folder">Remove Folder</string>
+<string name="remove_folder_confirm">Remove "%s" from watched folders? Your music files will not be deleted.</string>
 <string name="refresh_library">Refresh Library</string>
 <string name="rescan_all">Rescan All Folders</string>
+<string name="rescan_all_desc">Scan all watched folders for changes</string>
+<string name="rescan_all_confirm">Rescan all folders? This will check for new, modified, or removed music files.</string>
+<string name="rescan">Rescan</string>
 <string name="last_scanned">Last scanned: %s</string>
 <string name="songs_count">%d songs</string>
 <string name="local_folder_removed">Folder access removed</string>
@@ -218,8 +229,14 @@ Add to `metrolist_strings.xml`:
 <string name="play_streaming">Play from YouTube Music</string>
 <string name="remember_choice">Remember my choice</string>
 <string name="local_file_not_found">Local file not found</string>
-<string name="scanning_folders">Scanning music folders...</string>
+<string name="scanning_folders">Scanning folders…</string>
 <string name="scan_complete">Scan complete: %d songs added, %d removed</string>
+<string name="last_scan">Last Scan</string>
+<string name="scan_result_summary">%1$d added, %2$d updated, %3$d removed</string>
+<string name="folder_inaccessible">Folder no longer accessible</string>
+<string name="local_music_info_title">Add Your Music</string>
+<string name="local_music_info_desc">Add folders from your device to play your local music collection. Each subfolder will become a playlist.</string>
+<string name="select_folder">Select Folder</string>
 ```
 
 ---

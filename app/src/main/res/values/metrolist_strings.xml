@@ -718,4 +718,28 @@
     <string name="discord_activity_name_description">Custom name for the activity (leave empty for default)</string>
     <string name="discord_advanced_mode">Advanced mode</string>
     <string name="discord_advanced_mode_description">Show additional customization options for Rich Presence</string>
+
+    <!-- Local Music -->
+    <string name="local_music">Local Music</string>
+    <string name="local_music_folders">Music Folders</string>
+    <string name="add_music_folder">Add Music Folder</string>
+    <string name="add_music_folder_desc">Select a folder containing your music files. Subfolders will be converted to playlists automatically.</string>
+    <string name="add_music_folder_desc_short">Import music from device storage</string>
+    <string name="remove_folder">Remove Folder</string>
+    <string name="remove_folder_confirm">Remove "%s" from watched folders? Your music files will not be deleted.</string>
+    <string name="remove">Remove</string>
+    <string name="refresh_library">Refresh Library</string>
+    <string name="rescan_all">Rescan All Folders</string>
+    <string name="rescan_all_desc">Scan all watched folders for changes</string>
+    <string name="rescan_all_confirm">Rescan all folders? This will check for new, modified, or removed music files.</string>
+    <string name="rescan">Rescan</string>
+    <string name="last_scanned">Last scanned: %s</string>
+    <string name="songs_count">%d songs</string>
+    <string name="scanning_folders">Scanning folders…</string>
+    <string name="last_scan">Last Scan</string>
+    <string name="scan_result_summary">%1$d added, %2$d updated, %3$d removed</string>
+    <string name="folder_inaccessible">Folder no longer accessible</string>
+    <string name="local_music_info_title">Add Your Music</string>
+    <string name="local_music_info_desc">Add folders from your device to play your local music collection. Each subfolder will become a playlist.</string>
+    <string name="select_folder">Select Folder</string>
 </resources>

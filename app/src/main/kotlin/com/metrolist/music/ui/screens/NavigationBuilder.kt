@@ -48,6 +48,7 @@ import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
+import com.metrolist.music.ui.screens.settings.LocalMusicSettings
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
 import com.metrolist.music.ui.screens.settings.UpdaterScreen
@@ -338,6 +339,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/storage") {
         StorageSettings(navController, scrollBehavior)
+    }
+
+    composable("settings/local_music") {
+        LocalMusicSettings(navController, scrollBehavior)
     }
 
     composable("settings/privacy") {
