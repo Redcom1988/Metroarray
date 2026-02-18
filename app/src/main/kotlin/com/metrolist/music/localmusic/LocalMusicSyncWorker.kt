@@ -6,7 +6,7 @@
 package com.metrolist.music.localmusic
 
 import android.content.Context
-import android.net.Uri
+import kotlin.Result as kotlinResult
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -112,16 +112,16 @@ class LocalMusicSyncWorker @AssistedInject constructor(
         }
     }
 
-    override suspend fun doWork(): androidx.work.ListenableWorker.Result {
+    override suspend fun doWork(): Result {
         val syncType = inputData.getString(KEY_SYNC_TYPE) ?: SYNC_TYPE_ALL
 
         return try {
             Timber.d("Starting local music sync (type: $syncType)")
 
-            val result: kotlin.Result<ScanOperationResult> = when (syncType) {
+            val result: kotlinResult<ScanOperationResult> = when (syncType) {
                 SYNC_TYPE_SINGLE -> {
                     val folderId = inputData.getString(KEY_FOLDER_ID)
-                        ?: return androidx.work.ListenableWorker.Result.failure(
+                        ?: return Result.failure(
                             workDataOf("error" to "No folder ID provided for single sync")
                         )
                     syncSingleFolder(folderId)
@@ -132,7 +132,7 @@ class LocalMusicSyncWorker @AssistedInject constructor(
             if (result.isSuccess) {
                 val scanResult = result.getOrThrow()
                 Timber.d("Local music sync completed successfully: $scanResult")
-                androidx.work.ListenableWorker.Result.success(
+                Result.success(
                     workDataOf(
                         "songs_added" to scanResult.songsAdded,
                         "songs_removed" to scanResult.songsRemoved,
@@ -143,18 +143,18 @@ class LocalMusicSyncWorker @AssistedInject constructor(
             } else {
                 val error = result.exceptionOrNull()?.message ?: "Unknown error"
                 Timber.e("Local music sync failed: $error")
-                androidx.work.ListenableWorker.Result.failure(workDataOf("error" to error))
+                Result.failure(workDataOf("error" to error))
             }
         } catch (e: Exception) {
             Timber.e(e, "Local music sync crashed")
-            androidx.work.ListenableWorker.Result.failure(workDataOf("error" to (e.message ?: "Unknown error")))
+            Result.failure(workDataOf("error" to (e.message ?: "Unknown error")))
         }
     }
 
     /**
      * Syncs all active folders.
      */
-    private suspend fun syncAllFolders(): kotlin.Result<ScanOperationResult> {
+    private suspend fun syncAllFolders(): kotlinResult<ScanOperationResult> {
         val results = mutableMapOf<String, ScanOperationResult>()
 
         repository.refreshAllFolders { folderName, subfolder, count ->
@@ -174,9 +174,9 @@ class LocalMusicSyncWorker @AssistedInject constructor(
             val errors = results.filter { !it.value.success }
                 .map { "${it.key}: ${it.value.errorMessage}" }
                 .joinToString("; ")
-            kotlin.Result.failure(Exception("Some folders failed to sync: $errors"))
+            kotlinResult.failure(Exception("Some folders failed to sync: $errors"))
         } else {
-            kotlin.Result.success(
+            kotlinResult.success(
                 ScanOperationResult(
                     success = true,
                     songsAdded = totalAdded,
@@ -191,7 +191,7 @@ class LocalMusicSyncWorker @AssistedInject constructor(
     /**
      * Syncs a single folder.
      */
-    private suspend fun syncSingleFolder(folderId: String): kotlin.Result<ScanOperationResult> {
+    private suspend fun syncSingleFolder(folderId: String): kotlinResult<ScanOperationResult> {
         return repository.refreshFolder(folderId) { folderName, count ->
             Timber.d("Scanning $folderName: $count songs found")
         }

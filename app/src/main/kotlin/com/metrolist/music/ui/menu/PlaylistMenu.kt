@@ -42,7 +42,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -68,7 +67,6 @@ import com.metrolist.music.ui.component.PlaylistListItem
 import com.metrolist.music.ui.component.TextFieldDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
@@ -270,7 +268,7 @@ fun PlaylistMenu(
                                 delete(playlist.playlist)
                             }
                             coroutineScope.launch(Dispatchers.IO) {
-                                folderUri?.let { uri ->
+                                folderUri.let { uri ->
                                     localMusicRepository.removeMusicFolderByUri(uri)
                                 }
                             }

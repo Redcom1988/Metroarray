@@ -325,10 +325,10 @@ fun PlayerMenu(
                         },
                         text = stringResource(R.string.copy_link),
                         onClick = {
-                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                             val clip = android.content.ClipData.newPlainText("Song Link", "https://music.youtube.com/watch?v=${mediaMetadata.id}")
                             clipboard.setPrimaryClip(clip)
-                            android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.link_copied, Toast.LENGTH_SHORT).show()
                             onDismiss()
                         }
                     )
@@ -650,7 +650,7 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
         playerConnection.player.playbackParameters =
             PlaybackParameters(tempo, 2f.pow(transposeValue.toFloat() / 12))
     }
-    val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
+    val listenTogetherManager = LocalListenTogetherManager.current
     val isInRoom = listenTogetherManager?.isInRoom ?: false
 
     AlertDialog(
@@ -769,7 +769,7 @@ fun ListenTogetherDialog(
     if (!visible) return
     
     val context = LocalContext.current
-    val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
+    val listenTogetherManager = LocalListenTogetherManager.current
     
     // Handle case where manager is not available
     if (listenTogetherManager == null) {
@@ -1056,7 +1056,7 @@ fun ListenTogetherDialog(
                 is ListenTogetherEvent.RoomCreated -> {
                     isCreatingRoom = false
                     val clipboard =
-                        context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                     val clip = android.content.ClipData.newPlainText("ListenTogetherRoom", event.roomCode)
                     clipboard.setPrimaryClip(clip)
                 }
@@ -1797,6 +1797,10 @@ fun ListenTogetherDialog(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val creatingRoomText = stringResource(R.string.creating_room)
+                    val joiningRoomText = stringResource(R.string.joining_room, roomCodeInput)
+                    val errorUsernameEmptyText = stringResource(R.string.error_username_empty)
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1808,7 +1812,7 @@ fun ListenTogetherDialog(
                                 val finalUsername = username.trim()
                                 if (finalUsername.isNotBlank()) {
                                     savedUsername = finalUsername
-                                    Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, creatingRoomText, Toast.LENGTH_SHORT).show()
                                     isCreatingRoom = true
                                     isJoiningRoom = false
                                     joinErrorMessage = null
@@ -1841,18 +1845,14 @@ fun ListenTogetherDialog(
                                     val finalUsername = username.trim()
                                     if (finalUsername.isNotBlank()) {
                                         savedUsername = finalUsername
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.joining_room, roomCodeInput),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        Toast.makeText(context, joiningRoomText, Toast.LENGTH_SHORT).show()
                                         isJoiningRoom = true
                                         isCreatingRoom = false
                                         joinErrorMessage = null
                                         listenTogetherManager.connect()
                                         listenTogetherManager.joinRoom(roomCodeInput, finalUsername)
                                     } else {
-                                        Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, errorUsernameEmptyText, Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 modifier = Modifier.weight(1f),

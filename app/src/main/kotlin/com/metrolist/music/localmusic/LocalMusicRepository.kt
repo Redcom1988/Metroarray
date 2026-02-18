@@ -17,17 +17,16 @@ import com.metrolist.music.db.entities.PlaylistSongMap
 import com.metrolist.music.db.entities.SongAlbumMap
 import com.metrolist.music.db.entities.SongArtistMap
 import com.metrolist.music.db.entities.SongEntity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang3.RandomStringUtils
 import timber.log.Timber
 import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.core.net.toUri
 
 /**
  * Result of a scan operation
@@ -192,7 +191,7 @@ class LocalMusicRepository @Inject constructor(
                     IllegalArgumentException("Folder not found: $folderId")
                 )
 
-            val folderUri = Uri.parse(folder.folderUri)
+            val folderUri = folder.folderUri.toUri()
 
             // Check if still accessible
             if (!scanner.isFolderAccessible(folderUri)) {
@@ -252,7 +251,7 @@ class LocalMusicRepository @Inject constructor(
         onProgress: (String, Int) -> Unit
     ): ScanOperationResult {
         val startTime = System.currentTimeMillis()
-        val folderUri = Uri.parse(folder.folderUri)
+        val folderUri = folder.folderUri.toUri()
 
         var songsAdded = 0
         var songsRemoved = 0
@@ -336,7 +335,7 @@ class LocalMusicRepository @Inject constructor(
     ): String {
         val playlistName = if (folderResult.folderPath == parentFolder.folderName) {
             // Root folder - use a special name or "Local Music"
-            "${parentFolder.folderName}"
+            parentFolder.folderName
         } else {
             folderResult.folderName
         }

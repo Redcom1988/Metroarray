@@ -407,7 +407,7 @@ class PlayerConnection(
                 return
             }
             player.seekToNext()
-            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+            if (player.playbackState == Player.STATE_IDLE || player.playbackState == STATE_ENDED) {
                 player.prepare()
             }
             player.playWhenReady = true
@@ -432,7 +432,7 @@ class PlayerConnection(
             // If we are more than 3 seconds in, just restart the song
             if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
                 player.seekTo(0)
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == STATE_ENDED) {
                     player.prepare()
                 }
                 player.playWhenReady = true
@@ -440,7 +440,7 @@ class PlayerConnection(
             } else {
                 // Otherwise go to previous media item
                 player.seekToPreviousMediaItem()
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == STATE_ENDED) {
                     player.prepare()
                 }
                 player.playWhenReady = true

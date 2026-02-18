@@ -18,6 +18,7 @@ import timber.log.Timber
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.net.toUri
 
 @Singleton
 class LocalMusicErrorHandler @Inject constructor(
@@ -30,7 +31,7 @@ class LocalMusicErrorHandler @Inject constructor(
      */
     fun isFolderAccessible(folderUri: String): Boolean {
         return try {
-            val uri = Uri.parse(folderUri)
+            val uri = folderUri.toUri()
             val folder = DocumentFile.fromTreeUri(context, uri)
             folder?.exists() == true && folder.canRead()
         } catch (e: Exception) {
@@ -44,7 +45,7 @@ class LocalMusicErrorHandler @Inject constructor(
      */
     fun isFileAccessible(localPath: String): Boolean {
         return try {
-            val uri = Uri.parse(localPath)
+            val uri = localPath.toUri()
             val documentFile = DocumentFile.fromSingleUri(context, uri)
             documentFile?.exists() == true && documentFile.canRead()
         } catch (e: Exception) {
@@ -114,7 +115,7 @@ class LocalMusicErrorHandler @Inject constructor(
      */
     private fun computeFileHash(localPath: String): String {
         return try {
-            val uri = Uri.parse(localPath)
+            val uri = localPath.toUri()
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val buffer = ByteArray(1024 * 1024) // 1MB
                 val bytesRead = inputStream.read(buffer)

@@ -21,12 +21,15 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.session.MediaSessionManager
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.LoudnessEnhancer
+import android.media.session.MediaSessionManager
 import android.net.ConnectivityManager
 import android.os.Binder
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -90,13 +93,9 @@ import com.metrolist.music.constants.CrossfadeDurationKey
 import com.metrolist.music.constants.CrossfadeEnabledKey
 import com.metrolist.music.constants.CrossfadeGaplessKey
 import com.metrolist.music.constants.DisableLoadMoreWhenRepeatAllKey
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
 import com.metrolist.music.constants.DiscordActivityNameKey
 import com.metrolist.music.constants.DiscordActivityTypeKey
 import com.metrolist.music.constants.DiscordAdvancedModeKey
-import com.metrolist.music.constants.DiscordAvatarKey
 import com.metrolist.music.constants.DiscordButton1TextKey
 import com.metrolist.music.constants.DiscordButton1VisibleKey
 import com.metrolist.music.constants.DiscordButton2TextKey
@@ -119,6 +118,7 @@ import com.metrolist.music.constants.PauseOnMute
 import com.metrolist.music.constants.PersistentQueueKey
 import com.metrolist.music.constants.PersistentShuffleAcrossQueuesKey
 import com.metrolist.music.constants.PlayerVolumeKey
+import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
 import com.metrolist.music.constants.RepeatModeKey
 import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
@@ -128,7 +128,6 @@ import com.metrolist.music.constants.ScrobbleMinSongDurationKey
 import com.metrolist.music.constants.ShowLyricsKey
 import com.metrolist.music.constants.ShuffleModeKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
-import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
@@ -266,7 +265,7 @@ class MusicService :
 
     private var scope = CoroutineScope(Dispatchers.Main) + Job()
 
-    private val volumeKeyHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val volumeKeyHandler = Handler(Looper.getMainLooper())
 
     private val binder = MusicBinder()
 
@@ -351,7 +350,7 @@ class MusicService :
 
     private var discordRpc: DiscordRPC? = null
     private var lastPlaybackSpeed = 1.0f
-    private var discordUpdateJob: kotlinx.coroutines.Job? = null
+    private var discordUpdateJob: Job? = null
 
     private var scrobbleManager: ScrobbleManager? = null
 
@@ -484,8 +483,8 @@ class MusicService :
         playerInitialized.value = true
         Timber.tag(TAG).d("Player successfully initialized")
 
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        mediaSessionManager = getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager
         setupAudioFocusRequest()
 
         mediaLibrarySessionCallback.apply {
@@ -1578,7 +1577,8 @@ class MusicService :
                 val orderAfter = mutableListOf<Int>()
                 var idx = currentIndex
                 while (true) {
-                    idx = timeline.getNextWindowIndex(idx, Player.REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
+                    idx = timeline.getNextWindowIndex(idx,
+                        REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
                     if (idx == C.INDEX_UNSET) break
                     if (idx != currentIndex) orderAfter.add(idx)
                 }
@@ -1586,7 +1586,8 @@ class MusicService :
                 val prevList = mutableListOf<Int>()
                 var pIdx = currentIndex
                 while (true) {
-                    pIdx = timeline.getPreviousWindowIndex(pIdx, Player.REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
+                    pIdx = timeline.getPreviousWindowIndex(pIdx,
+                        REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
                     if (pIdx == C.INDEX_UNSET) break
                     if (pIdx != currentIndex) prevList.add(pIdx)
                 }
@@ -1920,7 +1921,7 @@ class MusicService :
             scheduleCrossfade()
         }
 
-        if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
+        if (playbackState == STATE_IDLE || playbackState == Player.STATE_ENDED) {
             scrobbleManager?.onSongStop()
         }
     }
@@ -1980,7 +1981,7 @@ class MusicService :
             } else {
                 stopWidgetUpdates()
             }
-            if (!player.isPlaying && !events.containsAny(Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+            if (!player.isPlaying && !events.containsAny(EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
                 scope.launch {
                     discordRpc?.close()
                 }
@@ -2938,14 +2939,14 @@ class MusicService :
     private fun setVolumeKeyLongPressListener(
         manager: MediaSessionManager,
         enabled: Boolean,
-        handler: android.os.Handler?
+        handler: Handler?
     ) {
         try {
             val listenerClass = Class.forName("android.media.session.MediaSessionManager\$OnVolumeKeyLongPressListener")
             val method = MediaSessionManager::class.java.getMethod(
                 "setOnVolumeKeyLongPressListener",
                 listenerClass,
-                android.os.Handler::class.java
+                Handler::class.java
             )
 
             if (enabled && volumeKeyListener == null) {
@@ -3125,7 +3126,7 @@ class MusicService :
                 ).getOrNull()
                 playbackData?.streamUrl
             } catch (e: Exception) {
-                timber.log.Timber.e(e, "Failed to get stream URL for Cast")
+                Timber.e(e, "Failed to get stream URL for Cast")
                 null
             }
         }
@@ -3139,9 +3140,9 @@ class MusicService :
             try {
                 castConnectionHandler = CastConnectionHandler(this, scope, this)
                 castConnectionHandler?.initialize()
-                timber.log.Timber.d("Google Cast initialized")
+                Timber.d("Google Cast initialized")
             } catch (e: Exception) {
-                timber.log.Timber.e(e, "Failed to initialize Google Cast")
+                Timber.e(e, "Failed to initialize Google Cast")
             }
         }
     }
@@ -3273,7 +3274,7 @@ class MusicService :
         try {
             (mediaSession as MediaSession).player = player
         } catch (e: Exception) {
-            timber.log.Timber.e(e, "Failed to swap player in MediaSession")
+            Timber.e(e, "Failed to swap player in MediaSession")
         }
 
         crossfadeJob = scope.launch {
