@@ -982,7 +982,7 @@ fun BottomSheetPlayer(
                                             )
                                         }
                                     },
-                                    shape = if (isLocalSong) RoundedCornerShape(50) else favShape,
+                                    shape = favShape,
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = textButtonColor,
                                         contentColor = iconButtonColor,
@@ -990,7 +990,7 @@ fun BottomSheetPlayer(
                                     modifier = Modifier.size(42.dp),
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.more_horiz),
+                                        painter = painterResource(R.drawable.lyrics_alt),
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp)
                                     )
