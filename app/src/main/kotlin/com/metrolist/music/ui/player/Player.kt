@@ -896,6 +896,8 @@ fun BottomSheetPlayer(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
+                val isLocalSong = currentSong?.song?.isLocal == true
+
                 if (useNewPlayerDesign) {
                     val shareShape = RoundedCornerShape(
                         topStart = 50.dp, bottomStart = 50.dp,
@@ -930,7 +932,7 @@ fun BottomSheetPlayer(
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-                            } else {
+                            } else if (!isLocalSong) {
                                 FilledIconButton(
                                     onClick = {
                                         val intent = Intent().apply {
@@ -980,7 +982,7 @@ fun BottomSheetPlayer(
                                             )
                                         }
                                     },
-                                    shape = favShape,
+                                    shape = if (isLocalSong) RoundedCornerShape(50) else favShape,
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = textButtonColor,
                                         contentColor = iconButtonColor,
@@ -996,7 +998,7 @@ fun BottomSheetPlayer(
                             } else {
                                 FilledIconButton(
                                     onClick = playerConnection::toggleLike,
-                                    shape = favShape,
+                                    shape = if (isLocalSong) RoundedCornerShape(50) else favShape,
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = textButtonColor,
                                         contentColor = iconButtonColor,
@@ -1035,7 +1037,7 @@ fun BottomSheetPlayer(
                                         .size(24.dp),
                                 )
                             }
-                        } else {
+                        } else if (!isLocalSong) {
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
@@ -1073,7 +1075,7 @@ fun BottomSheetPlayer(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .clip(RoundedCornerShape(24.dp))
+                                    .clip(RoundedCornerShape(if (isLocalSong) 20.dp else 24.dp))
                                     .background(textButtonColor)
                                     .clickable {
                                         menuState.show {
@@ -1097,6 +1099,31 @@ fun BottomSheetPlayer(
                                     painter = painterResource(R.drawable.more_horiz),
                                     contentDescription = null,
                                     tint = iconButtonColor,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(24.dp),
+                                )
+                            }
+                        } else if (isLocalSong) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(textButtonColor)
+                                    .clickable { playerConnection.toggleLike() },
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (currentSong?.song?.liked == true)
+                                            R.drawable.favorite
+                                        else
+                                            R.drawable.favorite_border
+                                    ),
+                                    contentDescription = null,
+                                    tint = if (currentSong?.song?.liked == true)
+                                        MaterialTheme.colorScheme.error
+                                    else
+                                        iconButtonColor,
                                     modifier = Modifier
                                         .align(Alignment.Center)
                                         .size(24.dp),

@@ -65,7 +65,6 @@ import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.HidePlayerThumbnailKey
 import com.metrolist.music.constants.LibraryFilter
-import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.LyricsAnimationStyle
 import com.metrolist.music.constants.LyricsAnimationStyleKey
 import com.metrolist.music.constants.LyricsClickKey
@@ -231,11 +230,6 @@ fun AppearanceSettings(
     val (slimNav, onSlimNavChange) = rememberPreference(
         SlimNavBarKey,
         defaultValue = false
-    )
-
-    val (listenTogetherInTopBar, onListenTogetherInTopBarChange) = rememberPreference(
-        ListenTogetherInTopBarKey,
-        defaultValue = true
     )
 
     val (swipeToSong, onSwipeToSongChange) = rememberPreference(
@@ -1349,27 +1343,6 @@ fun AppearanceSettings(
                         )
                     },
                     onClick = { onSlimNavChange(!slimNav) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.group_outlined),
-                    title = { Text(stringResource(R.string.listen_together_in_top_bar)) },
-                    description = { Text(stringResource(R.string.listen_together_in_top_bar_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = listenTogetherInTopBar,
-                            onCheckedChange = onListenTogetherInTopBarChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (listenTogetherInTopBar) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onListenTogetherInTopBarChange(!listenTogetherInTopBar) }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.grid_view),

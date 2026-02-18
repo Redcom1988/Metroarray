@@ -17,6 +17,7 @@ import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.PlaylistSong
 import com.metrolist.music.extensions.reversed
 import com.metrolist.music.extensions.toEnum
+import com.metrolist.music.localmusic.LocalMusicRepository
 import com.metrolist.music.utils.dataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +40,7 @@ constructor(
     @ApplicationContext context: Context,
     database: MusicDatabase,
     savedStateHandle: SavedStateHandle,
+    private val repository: LocalMusicRepository,
 ) : ViewModel() {
     val playlistId = savedStateHandle.get<String>("playlistId")!!
     val playlist =
@@ -101,5 +103,9 @@ constructor(
                 }
             }
         }
+    }
+
+    suspend fun removeFolder(folderUri: String) {
+        repository.removeMusicFolderByUri(folderUri)
     }
 }

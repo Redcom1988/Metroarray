@@ -159,6 +159,27 @@ class LocalMusicRepository @Inject constructor(
     }
 
     /**
+     * Removes a music folder by its URI and cleans up all associated data
+     * This is a convenience function for use when only the folderUri is available
+     */
+    suspend fun removeMusicFolderByUri(
+        folderUri: String,
+        removeSongs: Boolean = true
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val folder = database.getLocalMusicFolderByUri(folderUri)
+                ?: return@withContext Result.failure(
+                    IllegalArgumentException("Folder not found: $folderUri")
+                )
+
+            removeMusicFolder(folder.id, removeSongs)
+        } catch (e: Exception) {
+            Timber.e(e, "Error removing music folder by URI: $folderUri")
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Refreshes a specific folder - rescans for changes
      */
     suspend fun refreshFolder(

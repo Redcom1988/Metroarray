@@ -86,6 +86,13 @@ fun PlaylistMenu(
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val listenTogetherManager = LocalListenTogetherManager.current
+    
+    val localMusicRepository = remember {
+        com.metrolist.music.localmusic.LocalMusicRepository(
+            context,
+            database
+        )
+    }
     val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
     val dbPlaylist by database.playlist(playlist.id).collectAsState(initial = playlist)
     var songs by remember {
@@ -241,15 +248,13 @@ fun PlaylistMenu(
                             showDeletePlaylistDialog = false
                             onDismiss()
                             val folderUri = playlist.playlist.localFolderUri
-                            val player = playerConnection
                             
                             database.transaction {
                                 delete(playlist.playlist)
                             }
                             coroutineScope.launch(Dispatchers.IO) {
                                 folderUri?.let { uri ->
-                                    val folder = database.getLocalMusicFolderByUri(uri)
-                                    folder?.let { database.delete(it) }
+                                    localMusicRepository.removeMusicFolderByUri(uri)
                                 }
                             }
                         }

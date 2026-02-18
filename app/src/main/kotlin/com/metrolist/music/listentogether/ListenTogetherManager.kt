@@ -262,6 +262,12 @@ class ListenTogetherManager @Inject constructor(
                 isInRoom && !isHost
             }
             
+            // Set up blocking for local songs in Listen Together mode
+            connection?.shouldBlockLocalPlaybackInListenTogether = {
+                // Block local songs when in a Listen Together room (both host and guest)
+                isInRoom
+            }
+            
             // Add listener if in room
             if (connection != null && isInRoom) {
                 try {

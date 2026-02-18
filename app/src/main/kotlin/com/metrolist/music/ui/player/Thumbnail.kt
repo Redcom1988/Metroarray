@@ -212,6 +212,7 @@ fun Thumbnail(
     val queueTitle by playerConnection.queueTitle.collectAsState()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
+    val currentMediaItemId by playerConnection.currentMediaItemId.collectAsState()
 
     // Preferences - computed once
     // Disable swipe for Listen Together guests
@@ -314,6 +315,7 @@ fun Thumbnail(
                 PlaybackError(
                     error = playbackError,
                     retry = playerConnection.player::prepare,
+                    mediaId = currentMediaItemId,
                 )
             }
         }

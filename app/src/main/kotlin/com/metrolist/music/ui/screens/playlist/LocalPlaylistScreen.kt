@@ -99,7 +99,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -152,7 +151,6 @@ import com.metrolist.music.viewmodels.LocalPlaylistViewModel
 import com.yalantis.ucrop.UCrop
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sh.calvin.reorderable.ReorderableItem
@@ -397,15 +395,13 @@ fun LocalPlaylistScreen(
                         onClick = {
                             showDeletePlaylistDialog = false
                             val folderUri = playlist?.playlist?.localFolderUri
-                            val player = playerConnection
                             
                             database.query {
                                 playlist?.let { delete(it.playlist) }
                             }
-                            viewModel.viewModelScope.launch(Dispatchers.IO) {
-                                folderUri?.let { uri ->
-                                    val folder = database.getLocalMusicFolderByUri(uri)
-                                    folder?.let { database.delete(it) }
+                            folderUri?.let { uri ->
+                                viewModel.viewModelScope.launch {
+                                    viewModel.removeFolder(uri)
                                 }
                             }
                             navController.popBackStack()
@@ -930,6 +926,9 @@ fun LocalPlaylistHeader(
     val cropColor = MaterialTheme.colorScheme
     val darkTheme = darkMode == DarkMode.ON || (darkMode == DarkMode.AUTO && isSystemInDarkTheme())
 
+    val editPlaylistCoverTitle = stringResource(R.string.edit_playlist_cover)
+    val playlistSyncedTitle = stringResource(R.string.playlist_synced)
+
     val pickLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -942,7 +941,7 @@ fun LocalPlaylistHeader(
                 setCompressionFormat(Bitmap.CompressFormat.JPEG)
                 setCompressionQuality(90)
                 setHideBottomControls(true)
-                setToolbarTitle(context.getString(R.string.edit_playlist_cover))
+                setToolbarTitle(editPlaylistCoverTitle)
                 
                 setStatusBarLight(!darkTheme)
 
@@ -1346,7 +1345,7 @@ fun LocalPlaylistHeader(
                                     }
                                 }
                                 scope.launch(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar(context.getString(R.string.playlist_synced))
+                                    snackbarHostState.showSnackbar(playlistSyncedTitle)
                                 }
                             },
                             onDelete = onshowDeletePlaylistDialog,

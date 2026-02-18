@@ -47,6 +47,7 @@ class PlayerConnection(
         private const val PLAYER_INIT_TIMEOUT_MS = 5000L // 5 second timeout for player initialization
     }
 
+    private val coroutineScope = scope
     val service = binder.service
     private val playerReadinessFlow = service.isPlayerReady
     
@@ -145,6 +146,7 @@ class PlayerConnection(
     val queueTitle = MutableStateFlow<String?>(null)
     val queueWindows = MutableStateFlow<List<Timeline.Window>>(emptyList())
     val currentMediaItemIndex = MutableStateFlow(-1)
+    val currentMediaItemId = MutableStateFlow<String?>(null)
     val currentWindowIndex = MutableStateFlow(-1)
 
     val shuffleModeEnabled = MutableStateFlow(false)
@@ -161,6 +163,9 @@ class PlayerConnection(
     // Callback to check if playback changes should be blocked (e.g., Listen Together guest)
     var shouldBlockPlaybackChanges: (() -> Boolean)? = null
     
+    // Callback to check if local songs should be blocked in Listen Together mode
+    var shouldBlockLocalPlaybackInListenTogether: (() -> Boolean)? = null
+    
     // Flag to allow internal sync operations to bypass blocking (set by ListenTogetherManager)
     @Volatile
     var allowInternalSync: Boolean = false
@@ -173,7 +178,7 @@ class PlayerConnection(
     init {
         try {
             // Observe player changes (e.g. crossfade swap)
-            scope.launch {
+            coroutineScope.launch {
                 service.playerFlow.collect { newPlayer ->
                     if (newPlayer != null && newPlayer != attachedPlayer) {
                         updateAttachedPlayer(newPlayer)
@@ -207,6 +212,7 @@ class PlayerConnection(
         queueWindows.value = newPlayer.getQueueWindows()
         currentWindowIndex.value = newPlayer.getCurrentQueueIndex()
         currentMediaItemIndex.value = newPlayer.currentMediaItemIndex
+        currentMediaItemId.value = newPlayer.currentMediaItem?.mediaId
         shuffleModeEnabled.value = newPlayer.shuffleModeEnabled
         repeatMode.value = newPlayer.repeatMode
         
@@ -214,6 +220,29 @@ class PlayerConnection(
     }
 
     fun playQueue(queue: Queue) {
+        // Check if local songs should be blocked in Listen Together mode
+        if (shouldBlockLocalPlaybackInListenTogether?.invoke() == true) {
+            coroutineScope.launch {
+                try {
+                    val status = queue.getInitialStatus()
+                    val hasLocalSong = status.items.any { item ->
+                        (item.localConfiguration?.tag as? com.metrolist.music.models.MediaMetadata)?.isLocal == true
+                    }
+                    if (hasLocalSong) {
+                        Timber.tag("PlayerConnection").d("playQueue blocked - local song in Listen Together mode")
+                        error.value = PlaybackException(
+                            "Local songs cannot be played in Listen Together mode",
+                            null,
+                            PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND
+                        )
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "Error checking queue for local songs")
+                }
+            }
+        }
+        
         if (!playerReadinessFlow.value) {
             Timber.tag(TAG).w("playQueue called before player ready; delegating to service")
         }
@@ -440,6 +469,7 @@ class PlayerConnection(
     ) {
         mediaMetadata.value = mediaItem?.metadata
         currentMediaItemIndex.value = player.currentMediaItemIndex
+        currentMediaItemId.value = mediaItem?.mediaId
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
     }
@@ -451,6 +481,7 @@ class PlayerConnection(
         queueWindows.value = player.getQueueWindows()
         queueTitle.value = service.queueTitle
         currentMediaItemIndex.value = player.currentMediaItemIndex
+        currentMediaItemId.value = player.currentMediaItem?.mediaId
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
     }

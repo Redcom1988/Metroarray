@@ -36,6 +36,7 @@ import com.metrolist.music.R
 fun PlaybackError(
     error: PlaybackException,
     retry: () -> Unit,
+    mediaId: String? = null,
 ) {
     // Build detailed error info for debugging
     val rawErrorMessage = error.cause?.cause?.message 
@@ -45,13 +46,19 @@ fun PlaybackError(
     
     // Check if this is an age-restricted content error
     // Age-restricted content typically returns 403 Forbidden or contains age-related messages
-    val isAgeRestricted = rawErrorMessage.contains("age", ignoreCase = true) ||
-            rawErrorMessage.contains("Sign in to confirm your age", ignoreCase = true) ||
-            rawErrorMessage.contains("LOGIN_REQUIRED", ignoreCase = true) ||
-            rawErrorMessage.contains("confirm your age", ignoreCase = true) ||
-            rawErrorMessage.contains("403", ignoreCase = true) ||
-            rawErrorMessage.contains("Response code: 403", ignoreCase = true) ||
-            error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+    // Skip age-restricted check for local songs
+    val isLocalSong = mediaId?.startsWith("local_") == true
+    val isAgeRestricted = if (isLocalSong) {
+        false
+    } else {
+        rawErrorMessage.contains("age", ignoreCase = true) ||
+                rawErrorMessage.contains("Sign in to confirm your age", ignoreCase = true) ||
+                rawErrorMessage.contains("LOGIN_REQUIRED", ignoreCase = true) ||
+                rawErrorMessage.contains("confirm your age", ignoreCase = true) ||
+                rawErrorMessage.contains("403", ignoreCase = true) ||
+                rawErrorMessage.contains("Response code: 403", ignoreCase = true) ||
+                error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+    }
     
     val errorMessage = if (isAgeRestricted) {
         "This app does not support playing age-restricted songs. We are working on fixing this issue."

@@ -8,6 +8,8 @@ package com.metrolist.music.ui.screens.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
+import android.content.Intent
+import timber.log.Timber
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -78,13 +80,23 @@ fun LocalMusicSettings(
     var folderToRemove by remember { mutableStateOf<String?>(null) }
     var showRescanDialog by remember { mutableStateOf(false) }
 
-    // SAF folder picker launcher
+    // SAF folder picker launcher - use createOpenDocumentTreeIntent to get persistable permission
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        uri?.let {
+        uri?.let { selectedUri ->
+            // Take persistable URI permission so we can access the folder later
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    selectedUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+                Timber.w("Could not take persistable permission: ${e.message}")
+            }
+            
             coroutineScope.launch {
-                viewModel.addFolder(it)
+                viewModel.addFolder(selectedUri)
             }
         }
     }
