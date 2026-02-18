@@ -99,6 +99,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -151,6 +152,7 @@ import com.metrolist.music.viewmodels.LocalPlaylistViewModel
 import com.yalantis.ucrop.UCrop
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sh.calvin.reorderable.ReorderableItem
@@ -373,7 +375,7 @@ fun LocalPlaylistScreen(
             content = {
                 Text(
                     text = if (isLocalFolderPlaylist) {
-                        stringResource(R.string.remove_folder_confirm, playlist?.playlist!!.name)
+                        stringResource(R.string.delete_local_folder_playlist_confirm, playlist?.playlist!!.name)
                     } else {
                         stringResource(R.string.delete_playlist_confirm, playlist?.playlist!!.name)
                     },
@@ -382,33 +384,77 @@ fun LocalPlaylistScreen(
                 )
             },
             buttons = {
-                TextButton(
-                    onClick = {
-                        showDeletePlaylistDialog = false
+                if (isLocalFolderPlaylist) {
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.cancel))
                     }
-                ) {
-                    Text(text = stringResource(android.R.string.cancel))
-                }
-                TextButton(
-                    onClick = {
-                        showDeletePlaylistDialog = false
-                        viewModel.viewModelScope.launch(Dispatchers.IO) {
-                            // For local folder playlists, revoke folder access first
-                            if (isLocalFolderPlaylist) {
-                                playlist?.playlist?.localFolderUri?.let { folderUri ->
-                                    val folder = database.getLocalMusicFolderByUri(folderUri)
-                                    folder?.let { database.delete(it) }
-                                }
-                            }
+
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            val folderUri = playlist?.playlist?.localFolderUri
+                            val player = playerConnection
+                            
                             database.query {
                                 playlist?.let { delete(it.playlist) }
                             }
-                            playlist?.playlist?.browseId?.let { YouTube.deletePlaylist(it) }
+                            viewModel.viewModelScope.launch(Dispatchers.IO) {
+                                folderUri?.let { uri ->
+                                    val folder = database.getLocalMusicFolderByUri(uri)
+                                    folder?.let { database.delete(it) }
+                                }
+                            }
+                            navController.popBackStack()
                         }
-                        navController.popBackStack()
+                    ) {
+                        Text(text = stringResource(R.string.delete_and_remove_folder))
                     }
-                ) {
-                    Text(text = stringResource(android.R.string.ok))
+
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            database.query {
+                                playlist?.let { delete(it.playlist) }
+                            }
+                            playlist?.playlist?.browseId?.let {
+                                viewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    YouTube.deletePlaylist(it)
+                                }
+                            }
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Text(text = stringResource(R.string.delete_only))
+                    }
+                } else {
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.cancel))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            database.query {
+                                playlist?.let { delete(it.playlist) }
+                            }
+                            playlist?.playlist?.browseId?.let {
+                                viewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    YouTube.deletePlaylist(it)
+                                }
+                            }
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.ok))
+                    }
                 }
             }
         )

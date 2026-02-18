@@ -41,6 +41,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -66,6 +67,7 @@ import com.metrolist.music.ui.component.PlaylistListItem
 import com.metrolist.music.ui.component.TextFieldDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
@@ -208,45 +210,91 @@ fun PlaylistMenu(
         mutableStateOf(false)
     }
 
+    val isLocalFolderPlaylist = playlist.playlist.localFolderUri != null
+
     if (showDeletePlaylistDialog) {
         DefaultDialog(
             onDismiss = { showDeletePlaylistDialog = false },
             content = {
                 Text(
-                    text = stringResource(R.string.delete_playlist_confirm, playlist.playlist.name),
+                    text = if (isLocalFolderPlaylist) {
+                        stringResource(R.string.delete_local_folder_playlist_confirm, playlist.playlist.name)
+                    } else {
+                        stringResource(R.string.delete_playlist_confirm, playlist.playlist.name)
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 18.dp)
                 )
             },
             buttons = {
-                TextButton(
-                    onClick = {
-                        showDeletePlaylistDialog = false
+                if (isLocalFolderPlaylist) {
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.cancel))
                     }
-                ) {
-                    Text(text = stringResource(android.R.string.cancel))
-                }
 
-                TextButton(
-                    onClick = {
-                        showDeletePlaylistDialog = false
-                        onDismiss()
-                        database.transaction {
-                            // First toggle the like using the same logic as the like button
-                            if (playlist.playlist.bookmarkedAt != null) {
-                                // Using the same toggleLike() method that's used in the like button
-                                update(playlist.playlist.toggleLike())
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            onDismiss()
+                            val folderUri = playlist.playlist.localFolderUri
+                            val player = playerConnection
+                            
+                            database.transaction {
+                                delete(playlist.playlist)
                             }
-                            // Then delete the playlist
-                            delete(playlist.playlist)
+                            coroutineScope.launch(Dispatchers.IO) {
+                                folderUri?.let { uri ->
+                                    val folder = database.getLocalMusicFolderByUri(uri)
+                                    folder?.let { database.delete(it) }
+                                }
+                            }
                         }
-
-                        coroutineScope.launch(Dispatchers.IO) {
-                            playlist.playlist.browseId?.let { YouTube.deletePlaylist(it) }
-                        }
+                    ) {
+                        Text(text = stringResource(R.string.delete_and_remove_folder))
                     }
-                ) {
-                    Text(text = stringResource(android.R.string.ok))
+
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            onDismiss()
+                            database.transaction {
+                                delete(playlist.playlist)
+                            }
+                        }
+                    ) {
+                        Text(text = stringResource(R.string.delete_only))
+                    }
+                } else {
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.cancel))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            showDeletePlaylistDialog = false
+                            onDismiss()
+                            database.transaction {
+                                if (playlist.playlist.bookmarkedAt != null) {
+                                    update(playlist.playlist.toggleLike())
+                                }
+                                delete(playlist.playlist)
+                            }
+
+                            coroutineScope.launch(Dispatchers.IO) {
+                                playlist.playlist.browseId?.let { YouTube.deletePlaylist(it) }
+                            }
+                        }
+                    ) {
+                        Text(text = stringResource(android.R.string.ok))
+                    }
                 }
             }
         )

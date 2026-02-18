@@ -221,10 +221,6 @@ fun LocalMusicSettings(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
                                 Text(scanProgress)
                             }
                         },
@@ -296,15 +292,15 @@ fun LocalMusicSettings(
                         },
                         trailingContent = {
                             Row {
-                                if (!folder.isActive) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.warning),
-                                        contentDescription = stringResource(R.string.folder_inaccessible),
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                }
+//                                if (!folder.isActive) {
+//                                    Icon(
+//                                        painter = painterResource(R.drawable.warning),
+//                                        contentDescription = stringResource(R.string.folder_inaccessible),
+//                                        tint = MaterialTheme.colorScheme.error,
+//                                        modifier = Modifier.size(20.dp)
+//                                    )
+//                                    Spacer(modifier = Modifier.width(8.dp))
+//                                }
                                 IconButton(
                                     onClick = {
                                         coroutineScope.launch {

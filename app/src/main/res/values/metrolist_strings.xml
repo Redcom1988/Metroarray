@@ -67,6 +67,9 @@
     <string name="download_in_progress_desc">Download is in progress</string>
     <string name="share_playlist_desc">Share this playlist with others</string>
     <string name="delete_playlist_desc">Remove this playlist permanently</string>
+    <string name="delete_local_folder_playlist_confirm">Delete \"%s\"? Delete and revoke option will remove the corresponding folder access tied to the playlist</string>
+    <string name="delete_and_remove_folder">Delete &amp; Revoke</string>
+    <string name="delete_only">Delete Only</string>
     <string name="sync_playlist_desc">Sync playlist with YouTube Music</string>
     <string name="copy_link">Copy link</string>
     <string name="select">Select all</string>
