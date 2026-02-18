@@ -114,6 +114,14 @@ class LocalMusicRepository @Inject constructor(
             // Get all local songs from this folder
             val songs = database.getSongsInFolder(folder.folderUri).first()
             
+            // First, delete the playlist specifically created for this folder
+            val folderPlaylist = database.playlistsByNameAsc().first()
+                .find { it.playlist.localFolderUri == folder.folderUri }
+            folderPlaylist?.let {
+                database.clearPlaylist(it.playlist.id)
+                database.delete(it.playlist)
+            }
+            
             // Delete local playlists - find playlists whose songs are all from this folder
             val localPlaylists = database.playlistsByNameAsc().first()
                 .filter { it.playlist.isLocal }
@@ -130,10 +138,10 @@ class LocalMusicRepository @Inject constructor(
                 }
             }
 
-            // Mark songs as removed (not local anymore)
+            // Delete songs from this folder (actually delete from database)
             if (removeSongs) {
                 songs.forEach { song ->
-                    database.markSongAsRemoved(song.song.localPath ?: "")
+                    database.delete(song.song)
                 }
             }
 
