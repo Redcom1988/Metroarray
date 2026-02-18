@@ -94,10 +94,8 @@ fun LocalMusicSettings(
             } catch (e: SecurityException) {
                 Timber.w("Could not take persistable permission: ${e.message}")
             }
-            
-            coroutineScope.launch {
-                viewModel.addFolder(selectedUri)
-            }
+
+            viewModel.addFolder(selectedUri)
         }
     }
 
@@ -245,9 +243,8 @@ fun LocalMusicSettings(
                     )
                 )
             )
+            Spacer(modifier = Modifier.height(12.dp))
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Last Scan Results
         if (scanResults.isNotEmpty() && !isScanning) {
@@ -270,9 +267,8 @@ fun LocalMusicSettings(
                     )
                 }
             )
+            Spacer(modifier = Modifier.height(12.dp))
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Watched Folders
         if (folders.isNotEmpty()) {
@@ -341,9 +337,9 @@ fun LocalMusicSettings(
                     )
                 }
             )
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Actions
         if (folders.isNotEmpty()) {
@@ -357,9 +353,9 @@ fun LocalMusicSettings(
                     )
                 )
             )
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Info
         if (folders.isEmpty()) {

@@ -370,16 +370,32 @@ fun LocalPlaylistScreen(
     if (showDeletePlaylistDialog) {
         DefaultDialog(
             onDismiss = { showDeletePlaylistDialog = false },
-            content = {
+            title = {
                 Text(
-                    text = if (isLocalFolderPlaylist) {
-                        stringResource(R.string.delete_local_folder_playlist_confirm, playlist?.playlist!!.name)
-                    } else {
-                        stringResource(R.string.delete_playlist_confirm, playlist?.playlist!!.name)
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    text = stringResource(R.string.delete),
+                    style = MaterialTheme.typography.headlineSmall
                 )
+            },
+            content = {
+                Column {
+                    Text(
+                        text = if (isLocalFolderPlaylist) {
+                            stringResource(R.string.delete_local_folder_playlist_confirm, playlist?.playlist!!.name)
+                        } else {
+                            stringResource(R.string.delete_playlist_confirm, playlist?.playlist!!.name)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (isLocalFolderPlaylist) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.delete_local_folder_playlist_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             },
             buttons = {
                 if (isLocalFolderPlaylist) {

@@ -85,18 +85,20 @@ class LocalMusicSettingsViewModel @Inject constructor(
     /**
      * Adds a new music folder
      */
-    suspend fun addFolder(uri: Uri) {
-        _isScanning.value = true
-        _scanProgress.value = context.getString(com.metrolist.music.R.string.scanning_folders)
+    fun addFolder(uri: Uri) {
+        viewModelScope.launch {
+            _isScanning.value = true
+            _scanProgress.value = context.getString(com.metrolist.music.R.string.scanning_folders)
 
-        val result = repository.addMusicFolder(uri) { folderName, count ->
-            _scanProgress.value = "$folderName: $count songs found"
-        }
+            val result = repository.addMusicFolder(uri) { folderName, count ->
+                _scanProgress.value = "$folderName: $count songs found"
+            }
 
-        _isScanning.value = false
+            _isScanning.value = false
 
-        result.onSuccess { scanResult ->
-            updateScanResults(scanResult)
+            result.onSuccess { scanResult ->
+                updateScanResults(scanResult)
+            }
         }
     }
 

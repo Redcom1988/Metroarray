@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -25,16 +26,23 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import com.metrolist.music.BuildConfig
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
@@ -64,6 +72,7 @@ import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
+import com.metrolist.music.constants.VolumeButtonLongPressSkips
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.component.IconButton
@@ -180,6 +189,39 @@ fun PlayerSettings(
         KeepScreenOn,
         defaultValue = false
     )
+    val (volumeButtonLongPressSkips, onVolumeButtonLongPressSkipsChange) = rememberPreference(
+        VolumeButtonLongPressSkips,
+        defaultValue = false
+    )
+
+    val context = LocalContext.current
+    var volumePermissionGranted by remember {
+        mutableStateOf(
+            context.packageManager.checkPermission(
+                "android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER",
+                context.packageName
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycleScope.launch {
+            while (true) {
+                val isGranted = context.packageManager.checkPermission(
+                    "android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER",
+                    context.packageName
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                if (volumePermissionGranted && !isGranted) {
+                    onVolumeButtonLongPressSkipsChange(false)
+                }
+                volumePermissionGranted = isGranted
+                kotlinx.coroutines.delay(5000)
+            }
+        }
+    }
+
     val (historyDuration, onHistoryDurationChange) = rememberPreference(
         HistoryDuration,
         defaultValue = 30f
@@ -792,6 +834,45 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { onKeepScreenOnChange(!keepScreenOn) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.volume_up),
+                    title = { Text(stringResource(R.string.volume_button_long_press_skip)) },
+                    description = {
+                        Column {
+                            Text(stringResource(R.string.volume_button_long_press_skip_desc))
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (volumePermissionGranted) {
+                                    stringResource(R.string.volume_button_permission_granted)
+                                } else {
+                                    stringResource(R.string.volume_button_permission_not_granted, context.packageName)
+                                },
+                                color = if (volumePermissionGranted) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.error
+                                },
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = volumeButtonLongPressSkips,
+                            onCheckedChange = if (volumePermissionGranted) onVolumeButtonLongPressSkipsChange else null,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (volumeButtonLongPressSkips) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { if (volumePermissionGranted) onVolumeButtonLongPressSkipsChange(!volumeButtonLongPressSkips) }
                 )
             )
         )

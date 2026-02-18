@@ -11,20 +11,22 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.media.AudioDeviceCallback
-import android.media.AudioDeviceInfo
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.database.SQLException
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.session.MediaSessionManager
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.LoudnessEnhancer
 import android.net.ConnectivityManager
 import android.os.Binder
+import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -130,6 +132,7 @@ import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
+import com.metrolist.music.constants.VolumeButtonLongPressSkips
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.FormatEntity
@@ -238,6 +241,7 @@ class MusicService :
     lateinit var widgetManager: MetrolistWidgetManager
 
     private lateinit var audioManager: AudioManager
+    private lateinit var mediaSessionManager: MediaSessionManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var lastAudioFocusState = AudioManager.AUDIOFOCUS_NONE
     private var wasPlayingBeforeAudioFocusLoss = false
@@ -261,6 +265,8 @@ class MusicService :
     }
 
     private var scope = CoroutineScope(Dispatchers.Main) + Job()
+
+    private val volumeKeyHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     private val binder = MusicBinder()
 
@@ -479,6 +485,7 @@ class MusicService :
         Timber.tag(TAG).d("Player successfully initialized")
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
         setupAudioFocusRequest()
 
         mediaLibrarySessionCallback.apply {
@@ -703,6 +710,14 @@ class MusicService :
              player.setOffloadEnabled(useOffload)
              secondaryPlayer?.setOffloadEnabled(useOffload)
         }
+
+        dataStore.data
+            .map { it[VolumeButtonLongPressSkips] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { enabled ->
+                val shouldEnable = enabled && hasPermission()
+                setVolumeKeyLongPressListener(mediaSessionManager, shouldEnable, volumeKeyHandler)
+            }
 
         dataStore.data
             .map { it[DiscordTokenKey] to (it[EnableDiscordRPCKey] ?: true) }
@@ -2918,8 +2933,61 @@ class MusicService :
         }
     }
 
+    private var volumeKeyListener: Any? = null
+
+    private fun setVolumeKeyLongPressListener(
+        manager: MediaSessionManager,
+        enabled: Boolean,
+        handler: android.os.Handler?
+    ) {
+        try {
+            val listenerClass = Class.forName("android.media.session.MediaSessionManager\$OnVolumeKeyLongPressListener")
+            val method = MediaSessionManager::class.java.getMethod(
+                "setOnVolumeKeyLongPressListener",
+                listenerClass,
+                android.os.Handler::class.java
+            )
+
+            if (enabled && volumeKeyListener == null) {
+                volumeKeyListener = java.lang.reflect.Proxy.newProxyInstance(
+                    listenerClass.classLoader,
+                    arrayOf(listenerClass)
+                ) { _, _, args ->
+                    args?.firstOrNull()?.let { event ->
+                        if (event is KeyEvent) {
+                            handleVolumeKeyLongPress(event)
+                        }
+                    }
+                    null
+                }
+            }
+
+            method.invoke(manager, if (enabled) volumeKeyListener else null, handler)
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to set volume key long press listener")
+        }
+    }
+
+    private fun handleVolumeKeyLongPress(event: KeyEvent) {
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount <= 1) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_VOLUME_UP -> player.seekToNext()
+                KeyEvent.KEYCODE_VOLUME_DOWN -> player.seekToPrevious()
+            }
+        }
+    }
+
+    private fun hasPermission(): Boolean {
+        return packageManager.checkPermission(
+            "android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER",
+            packageName
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
     override fun onDestroy() {
         isRunning = false
+
+        setVolumeKeyLongPressListener(mediaSessionManager, false, null)
 
         try {
             unregisterReceiver(screenStateReceiver)

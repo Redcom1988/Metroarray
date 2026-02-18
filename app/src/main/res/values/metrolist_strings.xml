@@ -68,6 +68,7 @@
     <string name="share_playlist_desc">Share this playlist with others</string>
     <string name="delete_playlist_desc">Remove this playlist permanently</string>
     <string name="delete_local_folder_playlist_confirm">Delete \"%s\"? Delete and revoke option will remove the corresponding folder access tied to the playlist</string>
+    <string name="delete_local_folder_playlist_warning">This action cannot be undone.</string>
     <string name="delete_and_remove_folder">Delete &amp; Revoke</string>
     <string name="delete_only">Delete Only</string>
     <string name="sync_playlist_desc">Sync playlist with YouTube Music</string>
@@ -260,6 +261,10 @@
     <string name="pause_music_when_media_is_muted">Pause music when media is muted</string>
     <string name="resume_on_bluetooth_connect">Resume on Bluetooth connect</string>
     <string name="keep_screen_on_when_player_is_expanded">Keep screen on when player is expanded</string>
+    <string name="volume_button_long_press_skip">Volume buttons skip songs</string>
+    <string name="volume_button_long_press_skip_desc">Long press volume buttons to skip to next or previous song</string>
+    <string name="volume_button_permission_granted">Permission granted</string>
+    <string name="volume_button_permission_not_granted">Permission not granted - run: adb shell pm grant %1$s android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER</string>
 
     <string name="crossfade">Crossfade</string>
     <string name="crossfade_desc">Crossfade between songs</string>
