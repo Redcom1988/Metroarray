@@ -813,19 +813,6 @@ fun Queue(
                                     isSelected = false,
                                     isActive = isActive,
                                     isPlaying = isPlaying && isActive,
-                                    leadingContent = if (!inSelectMode && !locked && !isListenTogetherGuest) {
-                                        {
-                                            IconButton(
-                                                onClick = { },
-                                                modifier = Modifier.draggableHandle()
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.drag_handle),
-                                                    contentDescription = null,
-                                                )
-                                            }
-                                        }
-                                    } else null,
                                     trailingContent = {
                                         if (inSelectMode) {
                                             Checkbox(
@@ -834,6 +821,17 @@ fun Queue(
                                             )
                                         } else {
                                             if (!isListenTogetherGuest) {
+                                                if (!locked) {
+                                                    IconButton(
+                                                        onClick = { },
+                                                        modifier = Modifier.draggableHandle()
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.drag_handle),
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                }
                                                 IconButton(
                                                     onClick = {
                                                         menuState.show {

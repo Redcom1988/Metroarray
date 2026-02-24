@@ -2982,7 +2982,7 @@ class MusicService :
     }
 
     private fun handleVolumeKeyLongPress(event: KeyEvent) {
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount <= 1) {
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_VOLUME_UP -> player.seekToNext()
                 KeyEvent.KEYCODE_VOLUME_DOWN -> player.seekToPrevious()
