@@ -33,7 +33,9 @@ import com.metrolist.music.db.entities.AlbumWithSongs
 import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.db.entities.Event
+import com.metrolist.music.db.entities.EventDiagnosticInfo
 import com.metrolist.music.db.entities.EventWithSong
+import com.metrolist.music.db.entities.SampleSongInfo
 import com.metrolist.music.db.entities.FormatEntity
 import com.metrolist.music.db.entities.LocalMusicFolder
 import com.metrolist.music.db.entities.LocalMusicScanResult
@@ -468,8 +470,14 @@ interface DatabaseDao {
     @Query("SELECT SUM(playTime) FROM event WHERE timestamp >= :fromTimeStamp AND timestamp <= :toTimeStamp")
     fun getTotalPlayTimeInRange(fromTimeStamp: Long, toTimeStamp: Long): Flow<Long?>
 
+    @Query("SELECT COALESCE(SUM(playTime), 0) FROM event")
+    suspend fun getTotalPlayTime(): Long
+
     @Query("SELECT COUNT(DISTINCT songId) FROM event WHERE timestamp >= :fromTimeStamp AND timestamp <= :toTimeStamp")
     fun getUniqueSongCountInRange(fromTimeStamp: Long, toTimeStamp: Long): Flow<Int>
+
+    @Query("SELECT COUNT(DISTINCT songId) FROM event")
+    suspend fun getUniqueSongCount(): Int
 
     @Query(
         """
@@ -483,6 +491,15 @@ interface DatabaseDao {
 
     @Query(
         """
+        SELECT COUNT(DISTINCT artistId)
+        FROM event
+        JOIN song_artist_map ON event.songId = song_artist_map.songId
+    """
+    )
+    suspend fun getUniqueArtistCount(): Int
+
+    @Query(
+        """
         SELECT COUNT(DISTINCT albumId)
         FROM event
         JOIN song ON event.songId = song.id
@@ -490,6 +507,15 @@ interface DatabaseDao {
     """
     )
     fun getUniqueAlbumCountInRange(fromTimeStamp: Long, toTimeStamp: Long): Flow<Int>
+
+    @Query(
+        """
+        SELECT COUNT(DISTINCT albumId)
+        FROM event
+        JOIN song ON event.songId = song.id
+    """
+    )
+    suspend fun getUniqueAlbumCount(): Int
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
@@ -1163,6 +1189,75 @@ interface DatabaseDao {
     @Transaction
     @Query("DELETE FROM event")
     fun clearListenHistory()
+
+    // History Diagnostics Queries
+    @Query("SELECT COUNT(*) FROM song WHERE isLocal = 1")
+    suspend fun getLocalSongCount(): Int
+
+    @Query("SELECT COUNT(*) FROM song WHERE isLocal = 0")
+    suspend fun getYouTubeSongCount(): Int
+
+    @Query("""
+        SELECT COUNT(e.id) 
+        FROM event e 
+        JOIN song s ON e.songId = s.id 
+        WHERE s.isLocal = 1
+    """)
+    suspend fun getLocalEventCount(): Int
+
+    @Query("""
+        SELECT COUNT(e.id) 
+        FROM event e 
+        JOIN song s ON e.songId = s.id 
+        WHERE s.isLocal = 0
+    """)
+    suspend fun getYouTubeEventCount(): Int
+
+    @Query("""
+        SELECT COUNT(*) 
+        FROM event e 
+        LEFT JOIN song s ON e.songId = s.id 
+        WHERE s.id IS NULL
+    """)
+    suspend fun getOrphanedEventCount(): Int
+
+    @Query("""
+        SELECT s.id, s.title, s.isLocal, s.localPath 
+        FROM song s 
+        WHERE s.isLocal = 1 
+        ORDER BY s.title 
+        LIMIT 10
+    """)
+    suspend fun getSampleLocalSongs(): List<SampleSongInfo>
+
+    @Transaction
+    @Query("""
+        SELECT e.*, s.title, s.isLocal 
+        FROM event e 
+        JOIN song s ON e.songId = s.id 
+        ORDER BY e.timestamp DESC 
+        LIMIT 20
+    """)
+    suspend fun getRecentEventsWithInfo(): List<EventDiagnosticInfo>
+
+    @Query("""
+        SELECT COALESCE(SUM(e.playTime), 0)
+        FROM event e 
+        INNER JOIN song s ON e.songId = s.id 
+        WHERE s.isLocal = 1
+    """)
+    fun getLocalListeningTime(): Flow<Long>
+
+    @Query("""
+        SELECT COALESCE(SUM(e.playTime), 0)
+        FROM event e 
+        INNER JOIN song s ON e.songId = s.id 
+        WHERE s.isLocal = 0
+    """)
+    fun getYouTubeListeningTime(): Flow<Long>
+
+    @Query("SELECT MIN(timestamp) FROM event")
+    fun getFirstEventTimestamp(): Flow<Long?>
 
     @Transaction
     @Query("SELECT * FROM search_history WHERE `query` LIKE :query || '%' ORDER BY id DESC")

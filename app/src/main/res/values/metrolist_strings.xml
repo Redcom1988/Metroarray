@@ -793,4 +793,30 @@
     </plurals>
     <string name="queued_folders_scanning_desc">Folders will be scanned after current scan completes</string>
     <string name="queued_folders_waiting_desc">Check your notifications for scan progress</string>
+
+    <!-- Privacy Settings -->
+    <string name="pause_listen_history_desc">Pauses local playback history tracking</string>
+    <string name="clear_listen_history_desc">Clears local playback history</string>
+    <string name="pause_search_history_desc">Pauses local search history tracking</string>
+    <string name="clear_search_history_desc">Clears local search history</string>
+
+    <!-- Listening Statistics -->
+    <string name="listening_statistics">Listening Statistics</string>
+    <string name="overall_statistics">Overall Statistics</string>
+    <string name="total_listening_time">Total Listening Time</string>
+    <string name="hours_minutes_format">%d hours %d minutes</string>
+    <string name="minutes_format">%d minutes</string>
+    <string name="total_songs_played">Total Songs Played</string>
+    <string name="days_since_first_play">Days Since First Play</string>
+    <string name="average_per_day">Average Per Day</string>
+    <string name="library_statistics">Library Statistics</string>
+    <string name="unique_songs_listened">Unique Songs Listened</string>
+    <string name="unique_artists">Unique Artists</string>
+    <string name="unique_albums">Unique Albums</string>
+    <string name="music_sources">Music Sources</string>
+    <string name="youtube_music">YouTube Music</string>
+    <string name="music_source_stats">%d songs • %d%% of plays • %d hours</string>
+    <string name="recent_plays">Recent Plays</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
 </resources>

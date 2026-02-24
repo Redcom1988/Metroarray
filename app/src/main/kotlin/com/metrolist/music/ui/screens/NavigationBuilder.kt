@@ -45,6 +45,7 @@ import com.metrolist.music.ui.screens.settings.BehaviorSettings
 import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.DiscordLoginScreen
+import com.metrolist.music.ui.screens.settings.ListeningStatisticsScreen
 import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
@@ -358,6 +359,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/privacy") {
         PrivacySettings(navController, scrollBehavior)
+    }
+
+    composable("settings/listening_statistics") {
+        ListeningStatisticsScreen(navController, scrollBehavior)
     }
 
     composable("settings/backup_restore") {

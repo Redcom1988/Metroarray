@@ -180,6 +180,7 @@ fun PrivacySettings(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.delete_history),
                     title = { Text(stringResource(R.string.clear_listen_history)) },
+                    description = { Text(stringResource(R.string.clear_listen_history_desc)) },
                     onClick = { showClearListenHistoryDialog = true }
                 )
             )
@@ -213,6 +214,7 @@ fun PrivacySettings(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.clear_all),
                     title = { Text(stringResource(R.string.clear_search_history)) },
+                    description = { Text(stringResource(R.string.clear_search_history_desc)) },
                     onClick = { showClearSearchHistoryDialog = true }
                 )
             )

@@ -255,6 +255,10 @@ class MusicService :
     private var crossfadeGapless = true
     private var crossfadeTriggerJob: Job? = null
 
+    // History tracking
+    private var historyCheckJob: Job? = null
+    private val trackedMediaItems = mutableSetOf<String>()
+
     private val secondaryPlayerListener = object : Player.Listener {
         override fun onPlayerError(error: PlaybackException) {
             Timber.tag(TAG).e(error, "Secondary player error")
@@ -1832,6 +1836,12 @@ class MusicService :
         mediaItem: MediaItem?,
         reason: Int,
     ) {
+        // Clear history tracking for previous song and restart for new song
+        stopHistoryTracking()
+        if (player.playWhenReady) {
+            startHistoryTracking()
+        }
+        
         // Force Repeat One if the player ignored it and auto-advanced
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             val repeatMode = runBlocking { dataStore.get(RepeatModeKey, REPEAT_MODE_OFF) }
@@ -1957,6 +1967,9 @@ class MusicService :
 
         if (playWhenReady) {
             setupLoudnessEnhancer()
+            startHistoryTracking()
+        } else {
+            stopHistoryTracking()
         }
     }
 
@@ -2831,16 +2844,66 @@ class MusicService :
                 ).build()
         }
 
+    private fun startHistoryTracking() {
+        historyCheckJob?.cancel()
+        val currentMediaId = player.currentMediaItem?.mediaId ?: return
+        
+        historyCheckJob = scope.launch {
+            delay(100) // Small delay to ensure playback has actually started
+            val historyDurationMs = dataStore[HistoryDuration]?.times(1000f)?.toLong() ?: 10000L
+            
+            while (isActive && player.isPlaying) {
+                val currentPosition = player.currentPosition
+                val mediaId = player.currentMediaItem?.mediaId
+                
+                if (mediaId != null && 
+                    currentPosition >= historyDurationMs && 
+                    !trackedMediaItems.contains(mediaId) &&
+                    !dataStore.get(PauseListenHistoryKey, false)
+                ) {
+                    trackedMediaItems.add(mediaId)
+                    recordHistoryForCurrentSong(mediaId, currentPosition)
+                }
+                
+                delay(1000) // Check every second
+            }
+        }
+    }
+    
+    private fun stopHistoryTracking() {
+        historyCheckJob?.cancel()
+        historyCheckJob = null
+    }
+    
+    private fun recordHistoryForCurrentSong(mediaId: String, playTime: Long) {
+        database.query {
+            incrementTotalPlayTime(mediaId, playTime)
+            try {
+                insert(
+                    Event(
+                        songId = mediaId,
+                        timestamp = LocalDateTime.now(),
+                        playTime = playTime,
+                    ),
+                )
+            } catch (_: SQLException) {
+            }
+        }
+    }
+
     override fun onPlaybackStatsReady(
         eventTime: AnalyticsListener.EventTime,
         playbackStats: PlaybackStats,
     ) {
         val mediaItem = eventTime.timeline.getWindow(eventTime.windowIndex, Timeline.Window()).mediaItem
-        val historyDurationMs = dataStore[HistoryDuration]?.times(1000f) ?: 30000f
+        val historyDurationMs = dataStore[HistoryDuration]?.times(1000f) ?: 10000f
 
+        // Only record if not already tracked during playback
         if (playbackStats.totalPlayTimeMs >= historyDurationMs &&
-            !dataStore.get(PauseListenHistoryKey, false)
+            !dataStore.get(PauseListenHistoryKey, false) &&
+            !trackedMediaItems.contains(mediaItem.mediaId)
         ) {
+            trackedMediaItems.add(mediaItem.mediaId)
             database.query {
                 incrementTotalPlayTime(mediaItem.mediaId, playbackStats.totalPlayTimeMs)
                 try {
@@ -2855,6 +2918,9 @@ class MusicService :
                 }
             }
         }
+        
+        // Remove from tracked set so it can be tracked again on next play
+        trackedMediaItems.remove(mediaItem.mediaId)
 
         if (playbackStats.totalPlayTimeMs >= historyDurationMs) {
             CoroutineScope(Dispatchers.IO).launch {

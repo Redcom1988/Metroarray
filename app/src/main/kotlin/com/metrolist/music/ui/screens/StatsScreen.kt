@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -417,6 +418,16 @@ fun StatsScreen(
                     Icon(
                         painterResource(R.drawable.arrow_back),
                         contentDescription = null,
+                    )
+                }
+            },
+            actions = {
+                IconButton(
+                    onClick = { navController.navigate("settings/listening_statistics") }
+                ) {
+                    Icon(
+                        painterResource(R.drawable.today),
+                        contentDescription = stringResource(R.string.listening_statistics)
                     )
                 }
             },

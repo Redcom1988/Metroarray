@@ -107,20 +107,6 @@ fun SettingsScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Privacy & Security Section
-        Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_privacy),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.security),
-                    title = { Text(stringResource(R.string.privacy)) },
-                    onClick = { navController.navigate("settings/privacy") }
-                )
-            )
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
         // Storage & Data Section
         Material3SettingsGroup(
             title = stringResource(R.string.settings_section_storage),
@@ -139,6 +125,16 @@ fun SettingsScreen(
                     icon = painterResource(R.drawable.restore),
                     title = { Text(stringResource(R.string.backup_restore)) },
                     onClick = { navController.navigate("settings/backup_restore") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.security),
+                    title = { Text(stringResource(R.string.privacy)) },
+                    onClick = { navController.navigate("settings/privacy") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.analytics),
+                    title = { Text(stringResource(R.string.listening_statistics)) },
+                    onClick = { navController.navigate("settings/listening_statistics") }
                 )
             )
         )
