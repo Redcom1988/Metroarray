@@ -384,11 +384,12 @@ fun SongListItem(
     song: Song,
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
+    showLocalIcon: Boolean = true,
     showLikedIcon: Boolean = true,
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
-        if (song.song.isLocal) {
+        if (showLocalIcon && song.song.isLocal) {
             Icon.Local()
         }
         if (showLikedIcon && song.song.liked) {
@@ -1771,7 +1772,7 @@ object Icon {
     @Composable
     fun Local() {
         Icon(
-            painter = painterResource(R.drawable.storage),
+            painter = painterResource(R.drawable.local),
             contentDescription = "Local file",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
