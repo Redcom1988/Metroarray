@@ -9,9 +9,11 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.metrolist.music.db.entities.LocalMusicFolder
-import com.metrolist.music.db.entities.LocalMusicScanResult
 import com.metrolist.music.localmusic.LocalMusicRepository
+import com.metrolist.music.localmusic.LocalMusicSyncWorker
 import com.metrolist.music.localmusic.ScanOperationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,6 +36,8 @@ class LocalMusicSettingsViewModel @Inject constructor(
     private val repository: LocalMusicRepository
 ) : ViewModel() {
 
+    private val workManager = WorkManager.getInstance(context)
+
     private val _folders = MutableStateFlow<List<LocalMusicFolder>>(emptyList())
     val folders: StateFlow<List<LocalMusicFolder>> = _folders.asStateFlow()
 
@@ -42,9 +46,18 @@ class LocalMusicSettingsViewModel @Inject constructor(
 
     private val _scanProgress = MutableStateFlow("")
     val scanProgress: StateFlow<String> = _scanProgress.asStateFlow()
+    
+    private val _scanDetailMessage = MutableStateFlow("")
+    val scanDetailMessage: StateFlow<String> = _scanDetailMessage.asStateFlow()
 
     private val _lastScanResults = MutableStateFlow<List<ScanResultItem>>(emptyList())
     val lastScanResults: StateFlow<List<ScanResultItem>> = _lastScanResults.asStateFlow()
+    
+    private val _queuedFolders = MutableStateFlow<Int>(0)
+    val queuedFolders: StateFlow<Int> = _queuedFolders.asStateFlow()
+    
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     data class ScanResultItem(
         val folderName: String,
@@ -55,6 +68,7 @@ class LocalMusicSettingsViewModel @Inject constructor(
 
     init {
         loadFolders()
+        observeWorkManager()
     }
 
     private fun loadFolders() {
@@ -83,23 +97,96 @@ class LocalMusicSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Adds a new music folder
+     * Observes WorkManager to update scanning state
+     */
+    private fun observeWorkManager() {
+        viewModelScope.launch {
+            workManager.getWorkInfosByTagFlow(LocalMusicSyncWorker.WORK_NAME).collect { workInfos ->
+                val runningWork = workInfos.filter { it.state == WorkInfo.State.RUNNING }
+                val enqueuedWork = workInfos.filter { it.state == WorkInfo.State.ENQUEUED }
+                
+                _isScanning.value = runningWork.isNotEmpty()
+                _queuedFolders.value = enqueuedWork.size
+                
+                // Update progress from running work
+                if (runningWork.isNotEmpty()) {
+                    val progress = runningWork.firstOrNull()?.progress
+                    val folderName = progress?.getString(LocalMusicSyncWorker.PROGRESS_FOLDER_NAME) ?: ""
+                    val subfolderName = progress?.getString(LocalMusicSyncWorker.PROGRESS_SUBFOLDER_NAME) ?: ""
+                    val songsFound = progress?.getInt(LocalMusicSyncWorker.PROGRESS_SONGS_FOUND, 0) ?: 0
+                    val detailMessage = progress?.getString(LocalMusicSyncWorker.PROGRESS_DETAIL_MESSAGE) ?: ""
+                    
+                    if (folderName.isNotEmpty()) {
+                        val progressText = if (subfolderName.isNotEmpty()) {
+                            "$folderName/$subfolderName: $songsFound songs found"
+                        } else {
+                            "$folderName: $songsFound songs found"
+                        }
+                        _scanProgress.value = progressText
+                        _scanDetailMessage.value = detailMessage
+                    }
+                } else {
+                    // Clear detail message when not scanning
+                    _scanDetailMessage.value = ""
+                }
+                
+                // Reload folders when work completes
+                if (workInfos.any { it.state == WorkInfo.State.SUCCEEDED }) {
+                    loadFolders()
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds a new music folder by first adding to DB, then enqueueing WorkManager scan
      */
     fun addFolder(uri: Uri) {
         viewModelScope.launch {
-            _isScanning.value = true
-            _scanProgress.value = context.getString(com.metrolist.music.R.string.scanning_folders)
-
-            val result = repository.addMusicFolder(uri) { folderName, count ->
-                _scanProgress.value = "$folderName: $count songs found"
-            }
-
-            _isScanning.value = false
-
-            result.onSuccess { scanResult ->
-                updateScanResults(scanResult)
+            
+            // Add folder to database first (without scanning)
+            val result = repository.addMusicFolderToDatabase(uri)
+            
+            result.onSuccess { folderId ->
+                
+                // Clear any previous error
+                _errorMessage.value = null
+                
+                // Enqueue WorkManager job to scan the folder in background
+                LocalMusicSyncWorker.enqueueSyncFolder(context, folderId)
+                
+            }.onFailure { error ->
+                
+                // Set user-friendly error message
+                _errorMessage.value = when {
+                    error.message?.contains("Parent folder conflict") == true -> {
+                        // Extract folder name from error message
+                        val folderName = error.message?.substringAfter("'")?.substringBefore("'")
+                        "Cannot add parent folder: already watching subfolder '$folderName'"
+                    }
+                    error.message?.contains("Child folder conflict") == true -> {
+                        val folderName = error.message?.substringAfter("'")?.substringBefore("'")
+                        "Cannot add subfolder: already watching parent folder '$folderName'"
+                    }
+                    error.message?.contains("already being watched") == true -> {
+                        "This folder is already being watched"
+                    }
+                    error.message?.contains("Cannot access folder") == true -> {
+                        "Cannot access this folder. Please check permissions."
+                    }
+                    else -> {
+                        "Failed to add folder: ${error.message}"
+                    }
+                }
             }
         }
+    }
+    
+    /**
+     * Clears the current error message
+     */
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     /**
@@ -110,57 +197,24 @@ class LocalMusicSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Refreshes a specific folder
+     * Refreshes a specific folder using WorkManager
      */
     fun refreshFolder(folderId: String) {
-        viewModelScope.launch {
-            _isScanning.value = true
-            _scanProgress.value = context.getString(com.metrolist.music.R.string.scanning_folders)
-
-            val result = repository.refreshFolder(folderId) { folderName, count ->
-                _scanProgress.value = "$folderName: $count songs found"
-            }
-
-            _isScanning.value = false
-
-            result.onSuccess { scanResult ->
-                updateScanResults(scanResult)
-            }
-        }
+        LocalMusicSyncWorker.enqueueSyncFolder(context, folderId)
     }
 
     /**
-     * Refreshes all folders
+     * Refreshes all folders using WorkManager
      */
     fun refreshAllFolders() {
-        viewModelScope.launch {
-            _isScanning.value = true
-            _scanProgress.value = context.getString(com.metrolist.music.R.string.scanning_folders)
+        LocalMusicSyncWorker.enqueueSyncAll(context)
+    }
 
-            val aggregatedResult = ScanOperationResult(
-                success = true,
-                songsAdded = 0,
-                songsRemoved = 0,
-                songsUpdated = 0,
-                playlistsCreated = 0
-            )
-
-            repository.refreshAllFolders { folderName, subfolder, count ->
-                _scanProgress.value = "$folderName/$subfolder: $count songs found"
-            }.forEach { (_, result) ->
-                if (result.success) {
-                    aggregatedResult.copy(
-                        songsAdded = aggregatedResult.songsAdded + result.songsAdded,
-                        songsRemoved = aggregatedResult.songsRemoved + result.songsRemoved,
-                        songsUpdated = aggregatedResult.songsUpdated + result.songsUpdated,
-                        playlistsCreated = aggregatedResult.playlistsCreated + result.playlistsCreated
-                    )
-                }
-            }
-
-            _isScanning.value = false
-            updateScanResults(aggregatedResult)
-        }
+    /**
+     * Cancels all pending scans
+     */
+    fun cancelAllScans() {
+        LocalMusicSyncWorker.cancelAllSync(context)
     }
 
     private fun updateScanResults(result: ScanOperationResult) {

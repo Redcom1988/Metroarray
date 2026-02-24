@@ -8,11 +8,12 @@ package com.metrolist.music.ui.screens.settings
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
@@ -25,11 +26,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,15 +68,27 @@ fun LocalMusicSettings(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val folders by viewModel.folders.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val scanProgress by viewModel.scanProgress.collectAsState()
+    val scanDetailMessage by viewModel.scanDetailMessage.collectAsState()
     val scanResults by viewModel.lastScanResults.collectAsState()
+    val queuedFolders by viewModel.queuedFolders.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     var showAddFolderDialog by remember { mutableStateOf(false) }
     var folderToRemove by remember { mutableStateOf<String?>(null) }
     var showRescanDialog by remember { mutableStateOf(false) }
+    
+    // Show error message as snackbar
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearError()
+        }
+    }
 
     // SAF folder picker launcher - use createOpenDocumentTreeIntent to get persistable permission
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -181,16 +197,17 @@ fun LocalMusicSettings(
         )
     }
 
-    Column(
-        Modifier
-            .windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                    )
                 )
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-    ) {
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+        ) {
         Spacer(
             Modifier.windowInsetsPadding(
                 LocalPlayerAwareWindowInsets.current.only(
@@ -213,29 +230,67 @@ fun LocalMusicSettings(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Scan Progress
-        if (isScanning) {
+        // Scan Progress and Queue Status
+        if (isScanning || queuedFolders > 0) {
             Material3SettingsGroup(
-                title = stringResource(R.string.scanning_folders),
-                items = listOf(
-                    Material3SettingsItem(
-                        icon = null,
-                        title = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(scanProgress)
-                            }
-                        },
-                        description = {
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth(),
-                                strokeCap = StrokeCap.Round
+                title = if (isScanning) 
+                    stringResource(R.string.scanning_folders) 
+                else 
+                    stringResource(R.string.scanning_folders),
+                items = buildList {
+                    if (isScanning) {
+                        add(
+                            Material3SettingsItem(
+                                icon = null,
+                                title = {
+                                    Column {
+                                        Text(scanProgress.ifEmpty { stringResource(R.string.scanning_folders) })
+                                        if (scanDetailMessage.isNotEmpty()) {
+                                            Text(
+                                                text = scanDetailMessage,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                },
+                                description = {
+                                    LinearProgressIndicator(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        strokeCap = StrokeCap.Round
+                                    )
+                                }
                             )
-                        }
-                    )
-                )
+                        )
+                    }
+                    
+                    if (queuedFolders > 0) {
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.queue_music),
+                                title = {
+                                    Text(
+                                        context.resources.getQuantityString(
+                                            R.plurals.notification_scan_queued,
+                                            queuedFolders,
+                                            queuedFolders
+                                        )
+                                    )
+                                },
+                                description = {
+                                    Text(
+                                        stringResource(
+                                            if (isScanning)
+                                                R.string.queued_folders_scanning_desc
+                                            else
+                                                R.string.queued_folders_waiting_desc
+                                        )
+                                    )
+                                }
+                            )
+                        )
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -363,6 +418,19 @@ fun LocalMusicSettings(
                 )
             )
         }
+    }
+    
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .windowInsetsPadding(
+                LocalPlayerAwareWindowInsets.current.only(
+                    WindowInsetsSides.Bottom
+                )
+            )
+            .padding(16.dp)
+    )
     }
 
     TopAppBar(

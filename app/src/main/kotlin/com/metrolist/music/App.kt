@@ -10,8 +10,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.datastore.preferences.core.edit
+import androidx.work.Configuration
+import androidx.work.WorkManager
+import androidx.hilt.work.HiltWorkerFactory
+import java.util.concurrent.Executors
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -52,11 +57,20 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltAndroidApp
-class App : Application(), SingletonImageLoader.Factory {
+class App : Application(), SingletonImageLoader.Factory, Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .setMinimumLoggingLevel(Log.INFO)
+                .build()
 
     override fun onCreate() {
         super.onCreate()
@@ -73,6 +87,17 @@ class App : Application(), SingletonImageLoader.Factory {
         applicationScope.launch {
             initializeSettings()
             observeSettingsChanges()
+        }
+        
+        // Clean up any failed/stuck WorkManager jobs on startup
+        applicationScope.launch {
+            try {
+                val workManager = WorkManager.getInstance(this@App)
+                // Cancel all previous local music sync work to start fresh
+                workManager.cancelAllWorkByTag("local_music_sync")
+            } catch (e: Exception) {
+                Timber.e(e, "Error with WorkManager initialization")
+            }
         }
     }
 
@@ -130,15 +155,28 @@ class App : Application(), SingletonImageLoader.Factory {
 
         YouTube.useLoginForBrowse = settings[UseLoginForBrowse] ?: true
 
-        val channel = NotificationChannel(
+        val nm = getSystemService(NotificationManager::class.java)
+        
+        // Create updates notification channel
+        val updatesChannel = NotificationChannel(
             "updates",
             getString(R.string.update_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = getString(R.string.update_channel_desc)
         }
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(channel)
+        nm.createNotificationChannel(updatesChannel)
+        
+        // Create local music scan notification channel
+        val localMusicScanChannel = NotificationChannel(
+            "local_music_scan",
+            getString(R.string.notification_channel_local_music_scan),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = getString(R.string.notification_channel_local_music_scan_description)
+            setShowBadge(false)
+        }
+        nm.createNotificationChannel(localMusicScanChannel)
     }
 
     private fun observeSettingsChanges() {

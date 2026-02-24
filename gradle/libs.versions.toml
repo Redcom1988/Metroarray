@@ -118,6 +118,7 @@ protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", ve
 
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
 hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNavigation" }
+hilt-work-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltNavigation" }
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -160,14 +160,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlin {
-        jvmToolchain(21)
-        compilerOptions {
-            freeCompilerArgs.add("-Xannotation-default-target=param-property")
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -205,6 +197,14 @@ android {
             excludes += "META-INF/INDEX.LIST"
             excludes += "META-INF/io.netty.versions.properties"
         }
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -298,5 +298,5 @@ dependencies {
     // WorkManager for background sync
     implementation(libs.work.runtime)
     implementation(libs.hilt.work)
-    ksp(libs.hilt.compiler)
+    ksp(libs.hilt.work.compiler) // Required for @HiltWorker annotation processing
 }

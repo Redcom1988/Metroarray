@@ -53,15 +53,17 @@ class LocalMusicRepository @Inject constructor(
     private val metadataExtractor = MetadataExtractor(context)
 
     /**
-     * Adds a new music folder to watch and scans it immediately
+     * Adds a new music folder to the database without scanning.
+     * Returns the folder ID so WorkManager can be enqueued to scan it.
      */
-    suspend fun addMusicFolder(
-        folderUri: Uri,
-        onProgress: (String, Int) -> Unit = { _, _ -> }
-    ): Result<ScanOperationResult> = withContext(Dispatchers.IO) {
+    suspend fun addMusicFolderToDatabase(
+        folderUri: Uri
+    ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            
             // Check if folder is accessible
             if (!scanner.isFolderAccessible(folderUri)) {
+                Timber.e("Folder not accessible: $folderUri")
                 return@withContext Result.failure(
                     IllegalArgumentException("Cannot access folder: $folderUri")
                 )
@@ -73,10 +75,31 @@ class LocalMusicRepository @Inject constructor(
 
             // Check if folder already exists
             val existingFolders = database.getAllLocalMusicFolders().first()
+            
             if (existingFolders.any { it.folderUri == folderUri.toString() }) {
+                Timber.e("Folder already exists: $folderName")
                 return@withContext Result.failure(
                     IllegalStateException("Folder already added: $folderName")
                 )
+            }
+            
+            // Check for parent/child folder conflicts
+            val uriString = folderUri.toString()
+            existingFolders.forEach { existing ->
+                // Check if new folder is parent of existing folder
+                if (existing.folderUri.startsWith(uriString)) {
+                    Timber.e("Parent folder conflict with ${existing.folderName}")
+                    return@withContext Result.failure(
+                        IllegalStateException("Parent folder conflict: This folder contains already-added folder '${existing.folderName}'")
+                    )
+                }
+                // Check if new folder is child of existing folder
+                if (uriString.startsWith(existing.folderUri)) {
+                    Timber.e("Child folder conflict with ${existing.folderName}")
+                    return@withContext Result.failure(
+                        IllegalStateException("Child folder conflict: This folder is inside already-added folder '${existing.folderName}'")
+                    )
+                }
             }
 
             // Create folder record
@@ -86,6 +109,35 @@ class LocalMusicRepository @Inject constructor(
                 displayPath = displayPath
             )
             database.insert(folder)
+
+            Result.success(folder.id)
+        } catch (e: Exception) {
+            Timber.e(e, "Error adding music folder: $folderUri")
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * DEPRECATED: Use addMusicFolderToDatabase() + WorkManager instead.
+     * This function scans immediately and blocks until complete.
+     */
+    @Deprecated("Use addMusicFolderToDatabase() and enqueue WorkManager job instead")
+    suspend fun addMusicFolder(
+        folderUri: Uri,
+        onProgress: suspend (String, String, Int, String) -> Unit = { _, _, _, _ -> }
+    ): Result<ScanOperationResult> = withContext(Dispatchers.IO) {
+        try {
+            // Add folder to database
+            val folderIdResult = addMusicFolderToDatabase(folderUri)
+            if (folderIdResult.isFailure) {
+                return@withContext Result.failure(folderIdResult.exceptionOrNull()!!)
+            }
+            
+            val folderId = folderIdResult.getOrThrow()
+            val folder = database.getLocalMusicFolder(folderId).first()
+                ?: return@withContext Result.failure(
+                    IllegalStateException("Folder not found after insert: $folderId")
+                )
 
             // Scan the folder
             val result = performScan(folder, onProgress)
@@ -183,18 +235,24 @@ class LocalMusicRepository @Inject constructor(
      */
     suspend fun refreshFolder(
         folderId: String,
-        onProgress: (String, Int) -> Unit = { _, _ -> }
+        onProgress: suspend (String, String, Int, String) -> Unit = { _, _, _, _ -> }
     ): Result<ScanOperationResult> = withContext(Dispatchers.IO) {
         try {
+            
             val folder = database.getLocalMusicFolder(folderId).first()
-                ?: return@withContext Result.failure(
+            if (folder == null) {
+                Timber.e("Folder not found: $folderId")
+                return@withContext Result.failure(
                     IllegalArgumentException("Folder not found: $folderId")
                 )
+            }
+            
 
             val folderUri = folder.folderUri.toUri()
 
             // Check if still accessible
             if (!scanner.isFolderAccessible(folderUri)) {
+                Timber.e("Folder no longer accessible: ${folder.folderName}")
                 // Mark folder as inactive
                 database.setFolderActive(folderId, false)
                 return@withContext Result.failure(
@@ -216,19 +274,23 @@ class LocalMusicRepository @Inject constructor(
     }
 
     /**
-     * Refreshes all active folders
+     * Refreshes all folders - rescans for changes
      */
     suspend fun refreshAllFolders(
-        onProgress: (String, String, Int) -> Unit = { _, _, _ -> }
+        onProgress: suspend (String, String, Int, String) -> Unit = { _, _, _, _ -> }
     ): Map<String, ScanOperationResult> = withContext(Dispatchers.IO) {
+        
         val folders = database.getActiveLocalMusicFolders().first()
+        
         val results = mutableMapOf<String, ScanOperationResult>()
 
         folders.forEach { folder ->
-            val result = refreshFolder(folder.id) { folderName, count ->
-                onProgress(folder.folderName, folderName, count)
+            
+            val result = refreshFolder(folder.id) { folderName, subfolderName, count, detailMessage ->
+                onProgress(folderName, subfolderName, count, detailMessage)
             }
             results[folder.id] = result.getOrElse {
+                Timber.e(it, "Error refreshing folder ${folder.folderName}")
                 ScanOperationResult(
                     success = false,
                     songsAdded = 0,
@@ -248,8 +310,9 @@ class LocalMusicRepository @Inject constructor(
      */
     private suspend fun performScan(
         folder: LocalMusicFolder,
-        onProgress: (String, Int) -> Unit
+        onProgress: suspend (String, String, Int, String) -> Unit
     ): ScanOperationResult {
+        
         val startTime = System.currentTimeMillis()
         val folderUri = folder.folderUri.toUri()
 
@@ -260,29 +323,57 @@ class LocalMusicRepository @Inject constructor(
         var songsSkipped = 0
 
         try {
+            
             // Collect all scan results
             val scanResults = mutableListOf<FolderScanResult>()
             scanner.scanFolder(folderUri).collect { result ->
                 scanResults.add(result)
-                onProgress(result.folderName, result.audioFiles.size)
+                // Report discovery of subfolder
+                onProgress(folder.folderName, result.folderName, result.audioFiles.size, "Found subfolder: ${result.folderName}")
             }
 
+
+            // Track total songs processed for progress updates
+            var totalSongsProcessed = 0
+            
             // Process each folder result
             scanResults.forEach { folderResult ->
+                
+                // Report subfolder processing started
+                onProgress(folder.folderName, folderResult.folderName, totalSongsProcessed, "Processing subfolder: ${folderResult.folderName}")
+                
                 // Create playlist for this subfolder
                 val playlistId = createOrUpdatePlaylist(folderResult, folder)
                 playlistsCreated++
+                
+                // Report playlist creation
+                onProgress(folder.folderName, folderResult.folderName, totalSongsProcessed, "Created playlist: ${folderResult.folderName}")
 
                 // Process each audio file
-                folderResult.audioFiles.forEach { audioFile ->
+                folderResult.audioFiles.forEachIndexed { index, audioFile ->
                     val result = processAudioFile(audioFile, playlistId, folder)
                     when (result) {
-                        is FileProcessResult.Added -> songsAdded++
-                        is FileProcessResult.Updated -> songsUpdated++
-                        is FileProcessResult.Skipped -> songsSkipped++
+                        is FileProcessResult.Added -> {
+                            songsAdded++
+                        }
+                        is FileProcessResult.Updated -> {
+                            songsUpdated++
+                        }
+                        is FileProcessResult.Skipped -> {
+                            songsSkipped++
+                        }
+                    }
+                    
+                    totalSongsProcessed++
+                    
+                    // Update progress every 5 songs or on the last song
+                    if (totalSongsProcessed % 5 == 0 || index == folderResult.audioFiles.size - 1) {
+                        val songTitle = audioFile.fileName.substringBeforeLast('.')
+                        onProgress(folder.folderName, folderResult.folderName, totalSongsProcessed, "Added: $songTitle")
                     }
                 }
             }
+
 
             // Update folder record
             val totalSongs = scanResults.sumOf { it.audioFiles.size }
@@ -299,6 +390,7 @@ class LocalMusicRepository @Inject constructor(
             )
             database.insert(scanResult)
 
+
             return ScanOperationResult(
                 success = true,
                 songsAdded = songsAdded,
@@ -307,6 +399,8 @@ class LocalMusicRepository @Inject constructor(
                 playlistsCreated = playlistsCreated
             )
         } catch (e: Exception) {
+            Timber.e(e, "Error during scan")
+            
             // Save failed scan result
             val scanResult = LocalMusicScanResult(
                 folderId = folder.id,
@@ -340,10 +434,16 @@ class LocalMusicRepository @Inject constructor(
             folderResult.folderName
         }
 
-        // Check if playlist already exists for this folder by folderUri
-        val existingPlaylist = database.getLocalPlaylistByFolderUri(parentFolder.folderUri)
+        // Create a composite URI that uniquely identifies this subfolder
+        // This ensures each subfolder gets its own playlist
+        val compositeUri = "${parentFolder.folderUri}/${folderResult.folderPath}"
+        
+
+        // Check if playlist already exists for this folder by the composite folderUri
+        val existingPlaylist = database.getLocalPlaylistByFolderUri(compositeUri)
 
         return if (existingPlaylist != null) {
+            
             // Update playlist name in case it changed (but keep the same playlist)
             if (existingPlaylist.playlist.name != playlistName) {
                 database.query {
@@ -354,14 +454,17 @@ class LocalMusicRepository @Inject constructor(
             database.clearPlaylist(existingPlaylist.playlist.id)
             existingPlaylist.playlist.id
         } else {
-            // Create new playlist with folderUri reference
+            
+            // Create new playlist with the composite folderUri reference
+            // This ensures each subfolder has a unique identifier
             val playlist = PlaylistEntity(
                 name = playlistName,
                 isEditable = true,
                 isLocal = true,
-                localFolderUri = parentFolder.folderUri
+                localFolderUri = compositeUri
             )
             database.insert(playlist)
+            
             playlist.id
         }
     }
