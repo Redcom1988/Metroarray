@@ -457,7 +457,7 @@ fun AlbumScreen(
                 }
             }
 
-            if (otherVersions.isNotEmpty()) {
+            if (albumWithSongs?.album?.isLocal != true && otherVersions.isNotEmpty()) {
                 item(key = "other_versions_title") {
                     NavigationTitle(
                         title = stringResource(R.string.other_versions),

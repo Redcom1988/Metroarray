@@ -352,6 +352,10 @@
     <string name="start_radio_desc">Create a station based on this item</string>
     <string name="play_next_desc">Add to the top of your queue</string>
     <string name="add_to_queue_desc">Add to the bottom of your queue</string>
+    <string name="remove_from_queue_desc">Remove this song from the current queue</string>
+    <string name="put_as_next">Put as Next</string>
+    <string name="put_as_next_desc">Move to play immediately after current song</string>
+    <string name="play_as_new_queue">Play as New Queue</string>
     <string name="add_to_library_desc">Save to your library</string>
     <string name="download_desc">Make available for offline playback</string>
     <string name="add_to_playlist_desc">Add to one of your playlists</string>

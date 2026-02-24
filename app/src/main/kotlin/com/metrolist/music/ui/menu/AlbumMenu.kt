@@ -105,6 +105,7 @@ fun AlbumMenu(
     val scope = rememberCoroutineScope()
     val libraryAlbum by database.album(originalAlbum.id).collectAsState(initial = originalAlbum)
     val album = libraryAlbum ?: originalAlbum
+    val isLocalAlbum = album.album.isLocal
     var songs by remember {
         mutableStateOf(emptyList<Song>())
     }
@@ -349,26 +350,28 @@ fun AlbumMenu(
                             }
                         )
                     } else null,
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.share),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.share),
-                        onClick = {
-                            onDismiss()
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/playlist?list=${album.album.playlistId}")
+                    if (!isLocalAlbum) {
+                        NewAction(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.share),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            text = stringResource(R.string.share),
+                            onClick = {
+                                onDismiss()
+                                val intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/playlist?list=${album.album.playlistId}")
+                                }
+                                context.startActivity(Intent.createChooser(intent, null))
                             }
-                            context.startActivity(Intent.createChooser(intent, null))
-                        }
-                    )
+                        )
+                    } else null
                 ),
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
                 columns = if (isGuest) 1 else 3
@@ -515,47 +518,53 @@ fun AlbumMenu(
 
         item {
             Material3MenuGroup(
-                items = listOf(
-                    Material3MenuItemData(
-                        title = { Text(text = stringResource(R.string.view_artist)) },
-                        description = { Text(text = album.artists.joinToString { it.name }) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.artist),
-                                contentDescription = null
-                            )
-                        },
-                        onClick = {
-                            if (album.artists.size == 1) {
-                                navController.navigate("artist/${album.artists[0].id}")
-                                onDismiss()
-                            } else {
-                                showSelectArtistDialog = true
-                            }
-                        }
-                    ),
-                    Material3MenuItemData(
-                        title = { Text(text = stringResource(R.string.refetch)) },
-                        description = { Text(text = stringResource(R.string.refetch_desc)) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.sync),
-                                contentDescription = null,
-                                modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation)
-                            )
-                        },
-                        onClick = {
-                            refetchIconDegree -= 360
-                            scope.launch(Dispatchers.IO) {
-                                YouTube.album(album.id).onSuccess {
-                                    database.transaction {
-                                        update(album.album, it, album.artists)
-                                    }
+                items = buildList {
+                    add(
+                        Material3MenuItemData(
+                            title = { Text(text = stringResource(R.string.view_artist)) },
+                            description = { Text(text = album.artists.joinToString { it.name }) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.artist),
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                if (album.artists.size == 1) {
+                                    navController.navigate("artist/${album.artists[0].id}")
+                                    onDismiss()
+                                } else {
+                                    showSelectArtistDialog = true
                                 }
                             }
-                        }
+                        )
                     )
-                )
+                    if (!isLocalAlbum) {
+                        add(
+                            Material3MenuItemData(
+                                title = { Text(text = stringResource(R.string.refetch)) },
+                                description = { Text(text = stringResource(R.string.refetch_desc)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.sync),
+                                        contentDescription = null,
+                                        modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation)
+                                    )
+                                },
+                                onClick = {
+                                    refetchIconDegree -= 360
+                                    scope.launch(Dispatchers.IO) {
+                                        YouTube.album(album.id).onSuccess {
+                                            database.transaction {
+                                                update(album.album, it, album.artists)
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                    }
+                }
             )
         }
     }

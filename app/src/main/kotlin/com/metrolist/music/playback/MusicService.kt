@@ -45,6 +45,7 @@ import androidx.media3.common.Player.EVENT_TIMELINE_CHANGED
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_IDLE
 import androidx.media3.common.Timeline
 import androidx.media3.common.audio.SonicAudioProcessor
@@ -1527,8 +1528,8 @@ class MusicService :
     }
 
     fun playNext(items: List<MediaItem>) {
-        // If queue is empty or player is idle, play immediately instead
-        if (player.mediaItemCount == 0 || player.playbackState == STATE_IDLE) {
+        // If queue is empty or player is idle/ended, play immediately instead
+        if (player.mediaItemCount == 0 || player.playbackState == STATE_IDLE || player.playbackState == STATE_ENDED) {
             player.setMediaItems(items)
             player.prepare()
             // Don't start local playback if casting
@@ -1619,6 +1620,17 @@ class MusicService :
     }
 
     fun addToQueue(items: List<MediaItem>) {
+        // If queue is empty or player has ended, start playing the new items immediately
+        if (player.mediaItemCount == 0 || player.playbackState == STATE_ENDED) {
+            player.setMediaItems(items)
+            player.prepare()
+            // Don't start local playback if casting
+            if (castConnectionHandler?.isCasting?.value != true) {
+                player.play()
+            }
+            return
+        }
+
         // Remove duplicates if enabled
         if (dataStore.get(PreventDuplicateTracksInQueueKey, false)) {
             val itemIds = items.map { it.mediaId }.toSet()

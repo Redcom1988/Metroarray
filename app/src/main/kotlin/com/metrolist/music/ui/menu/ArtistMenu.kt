@@ -185,27 +185,29 @@ fun ArtistMenu(
             )
         }
 
-        item {
-            Material3MenuGroup(
-                items = listOf(
-                    Material3MenuItemData(
-                        title = {
-                            Text(text = if (artist.artist.bookmarkedAt != null) stringResource(R.string.subscribed) else stringResource(R.string.subscribe))
-                        },
-                        icon = {
-                            Icon(
-                                painter = painterResource(if (artist.artist.bookmarkedAt != null) R.drawable.subscribed else R.drawable.subscribe),
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = {
-                            database.transaction {
-                                update(artist.artist.toggleLike())
+        if (artist.artist.isYouTubeArtist) {
+            item {
+                Material3MenuGroup(
+                    items = listOf(
+                        Material3MenuItemData(
+                            title = {
+                                Text(text = if (artist.artist.bookmarkedAt != null) stringResource(R.string.subscribed) else stringResource(R.string.subscribe))
+                            },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(if (artist.artist.bookmarkedAt != null) R.drawable.subscribed else R.drawable.subscribe),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                database.transaction {
+                                    update(artist.artist.toggleLike())
+                                }
                             }
-                        }
+                        )
                     )
                 )
-            )
+            }
         }
     }
 }

@@ -285,28 +285,7 @@ fun SelectionSongMenu(
                                 }
                             )
                         )
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.shuffle)) },
-                                description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.shuffle),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    onDismiss()
-                                    playerConnection.playQueue(
-                                        ListQueue(
-                                            title = "Selection",
-                                            items = songSelection.shuffled().map { it.toMediaItem() },
-                                        ),
-                                    )
-                                    clearAction()
-                                }
-                            )
-                        )
+
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.add_to_queue)) },
@@ -536,11 +515,16 @@ fun SelectionMediaMetadataMenu(
     val downloadUtil = LocalDownloadUtil.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
+    val syncUtils = LocalSyncUtils.current
     val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
     val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
     val allLiked by remember(songSelection) {
         mutableStateOf(songSelection.isNotEmpty() && songSelection.all { it.liked })
+    }
+
+    val hasNonLocalSongs by remember(songSelection) {
+        mutableStateOf(songSelection.isNotEmpty() && songSelection.any { !it.isLocal })
     }
 
     var showChoosePlaylistDialog by rememberSaveable {
@@ -671,7 +655,7 @@ fun SelectionMediaMetadataMenu(
                     if (!isGuest) {
                         add(
                             Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.play)) },
+                                title = { Text(text = stringResource(R.string.play_as_new_queue)) },
                                 icon = {
                                     Icon(
                                         painter = painterResource(R.drawable.play),
@@ -690,45 +674,6 @@ fun SelectionMediaMetadataMenu(
                                 }
                             )
                         )
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.shuffle)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.shuffle),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    onDismiss()
-                                    playerConnection.playQueue(
-                                        ListQueue(
-                                            title = "Selection",
-                                            items = songSelection.shuffled().map { it.toMediaItem() },
-                                        ),
-                                    )
-                                    clearAction()
-                                }
-                            )
-                        )
-                        if (!isGuest) {
-                            add(
-                                Material3MenuItemData(
-                                    title = { Text(text = stringResource(R.string.add_to_queue)) },
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.queue_music),
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    onClick = {
-                                        onDismiss()
-                                        playerConnection.addToQueue(songSelection.map { it.toMediaItem() })
-                                        clearAction()
-                                    }
-                                )
-                            )
-                        }
                     }
                     add(
                         Material3MenuItemData(
@@ -750,40 +695,12 @@ fun SelectionMediaMetadataMenu(
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
-        item {
-            Material3MenuGroup(
-                items = buildList {
-                    add(
-                        Material3MenuItemData(
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.like_all)
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(
-                                        if (allLiked) R.drawable.favorite else R.drawable.favorite_border
-                                    ),
-                                    contentDescription = null,
-                                )
-                            },
-                            onClick = {
-                                database.query {
-                                    if (allLiked) {
-                                        songSelection.forEach { song ->
-                                            update(song.toSongEntity().toggleLike())
-                                        }
-                                    } else {
-                                        songSelection.filter { !it.liked }.forEach { song ->
-                                            update(song.toSongEntity().toggleLike())
-                                        }
-                                    }
-                                }
-                            }
-                        )
-                    )
-                    add(
+        // Download section (only if selection contains non-local songs)
+        if (hasNonLocalSongs) {
+            item {
+                Material3MenuGroup(
+                    items = buildList {
+                        add(
                         when (downloadState) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(
@@ -850,8 +767,52 @@ fun SelectionMediaMetadataMenu(
                                 )
                             }
                         }
+                        )
+                    }
+                )
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
+        // Like All section
+        item {
+            Material3MenuGroup(
+                items = listOf(
+                    Material3MenuItemData(
+                        title = {
+                            Text(
+                                text = stringResource(
+                                    if (allLiked) R.string.dislike_all else R.string.like_all
+                                )
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                painter = painterResource(
+                                    if (allLiked) R.drawable.favorite else R.drawable.favorite_border
+                                ),
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = {
+                            onDismiss()
+                            songSelection.forEach { metadata ->
+                                if ((!allLiked && !metadata.liked) || allLiked) {
+                                    val songEntity = metadata.toSongEntity()
+                                    val updatedSong = songEntity.toggleLike()
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        database.query {
+                                            update(updatedSong)
+                                        }
+                                        syncUtils.likeSong(updatedSong)
+                                    }
+                                }
+                            }
+                            clearAction()
+                        }
                     )
-                }
+                )
             )
         }
     }

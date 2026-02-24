@@ -38,6 +38,12 @@ constructor(
     init {
         viewModelScope.launch {
             val album = database.album(albumId).first()
+            
+            // Skip YouTube API call for local albums
+            if (album?.album?.isLocal == true) {
+                return@launch
+            }
+            
             YouTube
                 .album(albumId)
                 .onSuccess {

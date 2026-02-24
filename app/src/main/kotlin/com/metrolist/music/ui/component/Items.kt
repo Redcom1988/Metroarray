@@ -139,6 +139,7 @@ inline fun ListItem(
     modifier: Modifier = Modifier,
     title: String,
     noinline subtitle: (@Composable RowScope.() -> Unit)? = null,
+    noinline leadingContent: (@Composable () -> Unit)? = null,
     thumbnailContent: @Composable () -> Unit,
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
@@ -169,6 +170,14 @@ inline fun ListItem(
                 .padding(horizontal = 8.dp)
         }
     ) {
+        leadingContent?.let {
+            Box(
+                modifier = Modifier.padding(start = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                it()
+            }
+        }
         Box(
             modifier = Modifier.padding(6.dp),
             contentAlignment = Alignment.Center
@@ -230,6 +239,7 @@ fun ListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
     isActive: Boolean = false,
+    leadingContent: (@Composable () -> Unit)? = null,
 ) = ListItem(
     title = title,
     subtitle = {
@@ -244,6 +254,7 @@ fun ListItem(
             )
         }
     },
+    leadingContent = leadingContent,
     thumbnailContent = thumbnailContent,
     trailingContent = trailingContent,
     modifier = modifier,
@@ -258,6 +269,7 @@ fun ListItem(
     title: String,
     subtitle: String?,
     badges: @Composable RowScope.() -> Unit = {},
+    leadingContent: (@Composable () -> Unit)? = null,
     thumbnailContent: @Composable () -> Unit,
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
@@ -277,6 +289,7 @@ fun ListItem(
             )
         }
     },
+    leadingContent = leadingContent,
     thumbnailContent = thumbnailContent,
     trailingContent = trailingContent,
     modifier = modifier,
@@ -375,6 +388,9 @@ fun SongListItem(
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
+        if (song.song.isLocal) {
+            Icon.Local()
+        }
         if (showLikedIcon && song.song.liked) {
             Icon.Favorite()
         }
@@ -444,6 +460,9 @@ fun SongGridItem(
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
+        if (song.song.isLocal) {
+            Icon.Local()
+        }
         if (showLikedIcon && song.song.liked) {
             Icon.Favorite()
         }
@@ -506,6 +525,9 @@ fun ArtistListItem(
     artist: Artist,
     modifier: Modifier = Modifier,
     badges: @Composable RowScope.() -> Unit = {
+        if (artist.artist.isLocal) {
+            Icon.Local()
+        }
         if (artist.artist.bookmarkedAt != null) {
             Icon(
                 painter = painterResource(R.drawable.favorite),
@@ -545,6 +567,9 @@ fun ArtistGridItem(
     artist: Artist,
     modifier: Modifier = Modifier,
     badges: @Composable RowScope.() -> Unit = {
+        if (artist.artist.isLocal) {
+            Icon.Local()
+        }
         if (artist.artist.bookmarkedAt != null) {
             Icon.Favorite()
         }
@@ -604,6 +629,9 @@ fun AlbumListItem(
             )
         }
 
+        if (album.album.isLocal) {
+            Icon.Local()
+        }
         if (showLikedIcon && album.album.bookmarkedAt != null) {
             Icon.Favorite()
         }
@@ -922,6 +950,7 @@ fun MediaMetadataListItem(
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
+    leadingContent: (@Composable () -> Unit)? = null,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     ListItem(
@@ -945,6 +974,7 @@ fun MediaMetadataListItem(
             )
         },
         badges = { if (mediaMetadata.explicit) Icon.Explicit()},
+        leadingContent = leadingContent,
         thumbnailContent = {
             ItemThumbnail(
                 thumbnailUrl = mediaMetadata.thumbnailUrl,
@@ -1346,7 +1376,7 @@ fun LocalThumbnail(
             enter = fadeIn(tween(500)),
             exit = fadeOut(tween(500))
         ) {
-            Box(
+        Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
@@ -1732,6 +1762,18 @@ object Icon {
         Icon(
             painter = painterResource(R.drawable.explicit),
             contentDescription = null,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(end = 2.dp)
+        )
+    }
+
+    @Composable
+    fun Local() {
+        Icon(
+            painter = painterResource(R.drawable.storage),
+            contentDescription = "Local file",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .size(18.dp)
                 .padding(end = 2.dp)

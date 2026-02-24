@@ -337,42 +337,44 @@ fun ArtistScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Subscribe Button
-                                    OutlinedButton(
-                                        onClick = {
-                                            database.transaction {
-                                                val artist = libraryArtist?.artist
-                                                if (artist != null) {
-                                                    update(artist.toggleLike())
-                                                } else {
-                                                    artistPage?.artist?.let {
-                                                        insert(
-                                                            ArtistEntity(
-                                                                id = it.id,
-                                                                name = it.title,
-                                                                channelId = it.channelId,
-                                                                thumbnailUrl = it.thumbnail,
-                                                            ).toggleLike()
-                                                        )
+                                    // Subscribe Button (only for non-local artists)
+                                    if (!showLocal) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                database.transaction {
+                                                    val artist = libraryArtist?.artist
+                                                    if (artist != null) {
+                                                        update(artist.toggleLike())
+                                                    } else {
+                                                        artistPage?.artist?.let {
+                                                            insert(
+                                                                ArtistEntity(
+                                                                    id = it.id,
+                                                                    name = it.title,
+                                                                    channelId = it.channelId,
+                                                                    thumbnailUrl = it.thumbnail,
+                                                                ).toggleLike()
+                                                            )
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        },
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (libraryArtist?.artist?.bookmarkedAt != null)
-                                                MaterialTheme.colorScheme.surface
-                                            else
-                                                Color.Transparent
-                                        ),
-                                        shape = RoundedCornerShape(50),
-                                        modifier = Modifier.height(40.dp)
-                                    ) {
-                                        val isSubscribed = libraryArtist?.artist?.bookmarkedAt != null
-                                        Text(
-                                            text = stringResource(if (isSubscribed) R.string.subscribed else R.string.subscribe),
-                                            fontSize = 14.sp,
-                                            color = if (!isSubscribed) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                        )
+                                            },
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (libraryArtist?.artist?.bookmarkedAt != null)
+                                                    MaterialTheme.colorScheme.surface
+                                                else
+                                                    Color.Transparent
+                                            ),
+                                            shape = RoundedCornerShape(50),
+                                            modifier = Modifier.height(40.dp)
+                                        ) {
+                                            val isSubscribed = libraryArtist?.artist?.bookmarkedAt != null
+                                            Text(
+                                                text = stringResource(if (isSubscribed) R.string.subscribed else R.string.subscribe),
+                                                fontSize = 14.sp,
+                                                color = if (!isSubscribed) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                            )
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.weight(1f))

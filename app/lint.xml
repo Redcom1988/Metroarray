@@ -9,4 +9,7 @@
         <ignore path="src/main/res/values-lt" />
         <ignore path="src/main/res/values-sk" />
     </issue>
+
+    <!-- context.getString() is necessary for system APIs and async operations -->
+    <issue id="LocalContextGetResourceValue" severity="ignore" />
 </lint>

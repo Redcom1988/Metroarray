@@ -335,54 +335,66 @@ fun SongMenu(
             bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
         ),
     ) {
+        val isLocalSong = song.song.isLocal
+
         item {
             NewActionGrid(
-                actions = listOf(
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.edit),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                actions = buildList {
+                    if (!isLocalSong) {
+                        add(
+                            NewAction(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.edit),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                text = stringResource(R.string.edit),
+                                onClick = { showEditDialog = true }
                             )
-                        },
-                        text = stringResource(R.string.edit),
-                        onClick = { showEditDialog = true }
-                    ),
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.playlist_add),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.add_to_playlist),
-                        onClick = { showChoosePlaylistDialog = true }
-                    ),
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.share),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.share),
-                        onClick = {
-                            onDismiss()
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${song.id}")
-                            }
-                            context.startActivity(Intent.createChooser(intent, null))
-                        }
+                        )
+                    }
+                    add(
+                        NewAction(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.playlist_add),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            text = stringResource(R.string.add_to_playlist),
+                            onClick = { showChoosePlaylistDialog = true }
+                        )
                     )
-                ),
+                    if (!isLocalSong) {
+                        add(
+                            NewAction(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.share),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                text = stringResource(R.string.share),
+                                onClick = {
+                                    onDismiss()
+                                    val intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${song.id}")
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, null))
+                                }
+                            )
+                        )
+                    }
+                },
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
             )
         }
@@ -413,7 +425,7 @@ fun SongMenu(
                             }
                         )
                     } else null,
-                    if (!isGuest) {
+                    if (!isGuest && !isLocalSong) {
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.start_radio)) },
                             description = { Text(text = stringResource(R.string.start_radio_desc)) },
@@ -585,34 +597,36 @@ fun SongMenu(
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
-        item {
-            Material3MenuGroup(
-                items = listOf(
-                    when (download?.state) {
-                        Download.STATE_COMPLETED -> {
-                            Material3MenuItemData(
-                                title = {
-                                    Text(
-                                        text = stringResource(R.string.remove_download)
-                                    )
-                                },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.offline),
-                                        contentDescription = null
-                                    )
-                                },
-                                onClick = {
-                                    DownloadService.sendRemoveDownload(
-                                        context,
-                                        ExoDownloadService::class.java,
-                                        song.id,
-                                        false,
-                                    )
-                                }
-                            )
-                        }
-                        Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
+        // Download section (only for non-local songs)
+        if (!isLocalSong) {
+            item {
+                Material3MenuGroup(
+                    items = listOf(
+                        when (download?.state) {
+                            Download.STATE_COMPLETED -> {
+                                Material3MenuItemData(
+                                    title = {
+                                        Text(
+                                            text = stringResource(R.string.remove_download)
+                                        )
+                                    },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.offline),
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        DownloadService.sendRemoveDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            song.id,
+                                            false,
+                                        )
+                                    }
+                                )
+                            }
+                            Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.downloading)) },
                                 icon = {
@@ -660,6 +674,7 @@ fun SongMenu(
                     }
                 )
             )
+            }
         }
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -709,32 +724,34 @@ fun SongMenu(
                             )
                         )
                     }
-                    add(
-                        Material3MenuItemData(
-                            title = { Text(text = stringResource(R.string.refetch)) },
-                            description = { Text(text = stringResource(R.string.refetch_desc)) },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.sync),
-                                    contentDescription = null,
-                                    modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation),
-                                )
-                            },
-                            onClick = {
-                                refetchIconDegree -= 360
-                                scope.launch(Dispatchers.IO) {
-                                    YouTube.queue(listOf(song.id)).onSuccess {
-                                        val newSong = it.firstOrNull()
-                                        if (newSong != null) {
-                                            database.transaction {
-                                                update(song, newSong.toMediaMetadata())
+                    if (!isLocalSong) {
+                        add(
+                            Material3MenuItemData(
+                                title = { Text(text = stringResource(R.string.refetch)) },
+                                description = { Text(text = stringResource(R.string.refetch_desc)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.sync),
+                                        contentDescription = null,
+                                        modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation),
+                                    )
+                                },
+                                onClick = {
+                                    refetchIconDegree -= 360
+                                    scope.launch(Dispatchers.IO) {
+                                        YouTube.queue(listOf(song.id)).onSuccess {
+                                            val newSong = it.firstOrNull()
+                                            if (newSong != null) {
+                                                database.transaction {
+                                                    update(song, newSong.toMediaMetadata())
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
+                            )
                         )
-                    )
+                    }
                     add(
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.details)) },
