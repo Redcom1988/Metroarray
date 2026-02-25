@@ -278,7 +278,9 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .combinedClickable(
                         onClick = {
-                            navController.navigate("album/${it.id}")
+                            navController.navigate("album/${it.id}") {
+                                launchSingleTop = true
+                            }
                         },
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -299,7 +301,9 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .combinedClickable(
                         onClick = {
-                            navController.navigate("artist/${it.id}")
+                            navController.navigate("artist/${it.id}") {
+                                launchSingleTop = true
+                            }
                         },
                         onLongClick = {
                             haptic.performHapticFeedback(
@@ -339,9 +343,15 @@ fun HomeScreen(
                                 )
                             )
 
-                            is AlbumItem -> navController.navigate("album/${item.id}")
-                            is ArtistItem -> navController.navigate("artist/${item.id}")
-                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                            is AlbumItem -> navController.navigate("album/${item.id}") {
+                                launchSingleTop = true
+                            }
+                            is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                launchSingleTop = true
+                            }
+                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                launchSingleTop = true
+                            }
                         }
                     },
                     onLongClick = {
@@ -471,7 +481,9 @@ fun HomeScreen(
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Button(onClick = {
-                                            navController.navigate("wrapped")
+                                            navController.navigate("wrapped") {
+                                                launchSingleTop = true
+                                            }
                                         }) {
                                             Text(stringResource(R.string.open))
                                         }
@@ -636,7 +648,9 @@ fun HomeScreen(
                                 }
                             },
                             onClick = {
-                                navController.navigate("account")
+                                navController.navigate("account") {
+                                    launchSingleTop = true
+                                }
                             },
                             modifier = Modifier.animateItem()
                         )
@@ -777,9 +791,15 @@ fun HomeScreen(
                             },
                             onClick = {
                                 when (recommendation.title) {
-                                    is Song -> navController.navigate("album/${recommendation.title.album!!.id}")
-                                    is Album -> navController.navigate("album/${recommendation.title.id}")
-                                    is Artist -> navController.navigate("artist/${recommendation.title.id}")
+                                    is Song -> navController.navigate("album/${recommendation.title.album!!.id}") {
+                                        launchSingleTop = true
+                                    }
+                                    is Album -> navController.navigate("album/${recommendation.title.id}") {
+                                        launchSingleTop = true
+                                    }
+                                    is Artist -> navController.navigate("artist/${recommendation.title.id}") {
+                                        launchSingleTop = true
+                                    }
                                     is Playlist -> {}
                                 }
                             },
@@ -833,11 +853,17 @@ fun HomeScreen(
                             {
                                 when {
                                     endpoint.browseId == "FEmusic_moods_and_genres" -> 
-                                        navController.navigate("mood_and_genres")
+                                        navController.navigate("mood_and_genres") {
+                                            launchSingleTop = true
+                                        }
                                     endpoint.params != null -> 
-                                        navController.navigate("youtube_browse/${endpoint.browseId}?params=${endpoint.params}")
+                                        navController.navigate("youtube_browse/${endpoint.browseId}?params=${endpoint.params}") {
+                                            launchSingleTop = true
+                                        }
                                     else -> 
-                                        navController.navigate("browse/${endpoint.browseId}")
+                                        navController.navigate("browse/${endpoint.browseId}") {
+                                            launchSingleTop = true
+                                        }
                                 }
                             }
                         },
@@ -968,7 +994,9 @@ fun HomeScreen(
                         NavigationTitle(
                             title = stringResource(R.string.mood_and_genres),
                             onClick = {
-                                navController.navigate("mood_and_genres")
+                                navController.navigate("mood_and_genres") {
+                                    launchSingleTop = true
+                                }
                             },
                             modifier = Modifier.animateItem()
                         )
@@ -985,7 +1013,9 @@ fun HomeScreen(
                                 MoodAndGenresButton(
                                     title = it.title,
                                     onClick = {
-                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
+                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}") {
+                                            launchSingleTop = true
+                                        }
                                     },
                                     modifier = Modifier
                                         .padding(6.dp)
@@ -1067,7 +1097,9 @@ fun HomeScreen(
                 }
             },
             onRecognitionClick = {
-                navController.navigate("recognition")
+                navController.navigate("recognition") {
+                    launchSingleTop = true
+                }
             }
         )
 

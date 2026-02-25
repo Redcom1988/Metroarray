@@ -262,7 +262,9 @@ fun SongMenu(
                     modifier = Modifier
                         .height(ListItemHeight)
                         .clickable {
-                            navController.navigate("artist/${artist.id}")
+                            navController.navigate("artist/${artist.id}") {
+                                launchSingleTop = true
+                            }
                             showSelectArtistDialog = false
                             onDismiss()
                         }
@@ -694,7 +696,9 @@ fun SongMenu(
                             },
                             onClick = {
                                 if (song.artists.size == 1) {
-                                    navController.navigate("artist/${song.artists[0].id}")
+                                    navController.navigate("artist/${song.artists[0].id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 } else {
                                     showSelectArtistDialog = true
@@ -719,7 +723,9 @@ fun SongMenu(
                                 },
                                 onClick = {
                                     onDismiss()
-                                    navController.navigate("album/${song.song.albumId}")
+                                    navController.navigate("album/${song.song.albumId}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                             )
                         )

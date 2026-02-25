@@ -226,7 +226,9 @@ fun AlbumMenu(
                     Modifier
                         .height(ListItemHeight)
                         .clickable {
-                            navController.navigate("artist/${artist.id}")
+                            navController.navigate("artist/${artist.id}") {
+                                launchSingleTop = true
+                            }
                             showSelectArtistDialog = false
                             onDismiss()
                         }
@@ -531,7 +533,9 @@ fun AlbumMenu(
                             },
                             onClick = {
                                 if (album.artists.size == 1) {
-                                    navController.navigate("artist/${album.artists[0].id}")
+                                    navController.navigate("artist/${album.artists[0].id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 } else {
                                     showSelectArtistDialog = true

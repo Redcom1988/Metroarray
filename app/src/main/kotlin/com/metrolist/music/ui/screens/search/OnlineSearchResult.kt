@@ -137,13 +137,14 @@ fun OnlineSearchResult(
     }
 
 
- 
+  
     val onSearch: (String) -> Unit = remember {
         { searchQuery ->
             if (searchQuery.isNotEmpty()) {
                 isSearchFocused = false
                 focusManager.clearFocus()
                 navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}") {
+                    launchSingleTop = true
                     popUpTo("search/${URLEncoder.encode(decodedQuery, "UTF-8")}") {
                         inclusive = true
                     }
@@ -250,9 +251,15 @@ fun OnlineSearchResult(
                                 }
                             }
 
-                            is AlbumItem -> navController.navigate("album/${item.id}")
-                            is ArtistItem -> navController.navigate("artist/${item.id}")
-                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                            is AlbumItem -> navController.navigate("album/${item.id}") {
+                                launchSingleTop = true
+                            }
+                            is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                launchSingleTop = true
+                            }
+                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                launchSingleTop = true
+                            }
                         }
                     },
                     onLongClick = longClick,

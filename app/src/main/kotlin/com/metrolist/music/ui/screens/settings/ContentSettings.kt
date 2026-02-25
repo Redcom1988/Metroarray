@@ -771,7 +771,9 @@ fun ContentSettings(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language_korean_latin),
                     title = { Text(stringResource(R.string.lyrics_romanization)) },
-                    onClick = { navController.navigate("settings/content/romanization") }
+                    onClick = { navController.navigate("settings/content/romanization") {
+                        launchSingleTop = true
+                    } }
                 )
             )
         )

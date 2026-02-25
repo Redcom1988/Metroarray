@@ -71,12 +71,16 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.palette),
                     title = { Text(stringResource(R.string.appearance)) },
-                    onClick = { navController.navigate("settings/appearance") }
+                    onClick = { navController.navigate("settings/appearance") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.tune),
                     title = { Text(stringResource(R.string.behavior)) },
-                    onClick = { navController.navigate("settings/behavior") }
+                    onClick = { navController.navigate("settings/behavior") {
+                        launchSingleTop = true
+                    } }
                 )
             )
         )
@@ -90,17 +94,23 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.play),
                     title = { Text(stringResource(R.string.player_and_audio)) },
-                    onClick = { navController.navigate("settings/player") }
+                    onClick = { navController.navigate("settings/player") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content)) },
-                    onClick = { navController.navigate("settings/content") }
+                    onClick = { navController.navigate("settings/content") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.translate),
                     title = { Text(stringResource(R.string.ai_lyrics_translation)) },
-                    onClick = { navController.navigate("settings/ai") }
+                    onClick = { navController.navigate("settings/ai") {
+                        launchSingleTop = true
+                    } }
                 )
             )
         )
@@ -114,27 +124,37 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.storage),
                     title = { Text(stringResource(R.string.storage)) },
-                    onClick = { navController.navigate("settings/storage") }
+                    onClick = { navController.navigate("settings/storage") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.local),
                     title = { Text(stringResource(R.string.local_music)) },
-                    onClick = { navController.navigate("settings/local_music") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.restore),
-                    title = { Text(stringResource(R.string.backup_restore)) },
-                    onClick = { navController.navigate("settings/backup_restore") }
+                    onClick = { navController.navigate("settings/local_music") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.security),
                     title = { Text(stringResource(R.string.privacy)) },
-                    onClick = { navController.navigate("settings/privacy") }
+                    onClick = { navController.navigate("settings/privacy") {
+                        launchSingleTop = true
+                    } }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.analytics),
                     title = { Text(stringResource(R.string.listening_statistics)) },
-                    onClick = { navController.navigate("settings/listening_statistics") }
+                    onClick = { navController.navigate("settings/listening_statistics") {
+                        launchSingleTop = true
+                    } }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.restore),
+                    title = { Text(stringResource(R.string.backup_restore)) },
+                    onClick = { navController.navigate("settings/backup_restore") {
+                        launchSingleTop = true
+                    } }
                 )
             )
         )
@@ -193,14 +213,18 @@ fun SettingsScreen(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.update),
                         title = { Text(stringResource(R.string.updater)) },
-                        onClick = { navController.navigate("settings/updater") }
+                        onClick = { navController.navigate("settings/updater") {
+                            launchSingleTop = true
+                        } }
                     )
                 )
                 add(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.info),
                         title = { Text(stringResource(R.string.about)) },
-                        onClick = { navController.navigate("settings/about") }
+                        onClick = { navController.navigate("settings/about") {
+                            launchSingleTop = true
+                        } }
                     )
                 )
                 if (latestVersionName != BuildConfig.VERSION_NAME) {

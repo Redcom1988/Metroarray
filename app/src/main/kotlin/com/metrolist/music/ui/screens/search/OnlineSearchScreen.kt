@@ -239,15 +239,21 @@ fun OnlineSearchScreen(
                                     }
                                 }
                                 is AlbumItem -> {
-                                    navController.navigate("album/${item.id}")
+                                    navController.navigate("album/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 }
                                 is ArtistItem -> {
-                                    navController.navigate("artist/${item.id}")
+                                    navController.navigate("artist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 }
                                 is PlaylistItem -> {
-                                    navController.navigate("online_playlist/${item.id}")
+                                    navController.navigate("online_playlist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 }
                             }

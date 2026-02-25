@@ -240,7 +240,9 @@ fun AlbumScreen(
                         ) {
                             albumWithSongs.artists.fastForEachIndexed { index, artist ->
                                 val link = LinkAnnotation.Clickable(artist.id) {
-                                    navController.navigate("artist/${artist.id}")
+                                    navController.navigate("artist/${artist.id}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                                 withLink(link) {
                                     append(artist.name)
@@ -480,7 +482,9 @@ fun AlbumScreen(
                                 modifier =
                                 Modifier
                                     .combinedClickable(
-                                        onClick = { navController.navigate("album/${item.id}") },
+                                        onClick = { navController.navigate("album/${item.id}") {
+                                            launchSingleTop = true
+                                        } },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             menuState.show {

@@ -86,7 +86,9 @@ fun SearchScreen(
         { searchQuery ->
             if (searchQuery.isNotEmpty()) {
                 focusManager.clearFocus()
-                navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}")
+                navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}") {
+                    launchSingleTop = true
+                }
 
                 if (!pauseSearchHistory) {
                     coroutineScope.launch(Dispatchers.IO) {
@@ -103,7 +105,9 @@ fun SearchScreen(
         { searchQuery ->
             if (searchQuery.isNotEmpty()) {
                 focusManager.clearFocus()
-                navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}")
+                navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}") {
+                    launchSingleTop = true
+                }
 
                 if (!pauseSearchHistory) {
                     coroutineScope.launch(Dispatchers.IO) {

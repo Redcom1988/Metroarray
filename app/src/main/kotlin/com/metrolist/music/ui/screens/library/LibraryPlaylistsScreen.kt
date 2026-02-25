@@ -213,7 +213,9 @@ fun LibraryPlaylistsScreen(
             allowSyncing = allowSyncing,
             onPlaylistCreated = { playlistId ->
                 showCreatePlaylistDialog = false
-                navController.navigate("local_playlist/$playlistId")
+                navController.navigate("local_playlist/$playlistId") {
+                    launchSingleTop = true
+                }
             }
         )
     }
@@ -305,7 +307,9 @@ fun LibraryPlaylistsScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("auto_playlist/liked")
+                                        navController.navigate("auto_playlist/liked") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -324,7 +328,9 @@ fun LibraryPlaylistsScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("auto_playlist/downloaded")
+                                        navController.navigate("auto_playlist/downloaded") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -343,7 +349,9 @@ fun LibraryPlaylistsScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("top_playlist/$topSize")
+                                        navController.navigate("top_playlist/$topSize") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -362,7 +370,9 @@ fun LibraryPlaylistsScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("cache_playlist/cached")
+                                        navController.navigate("cache_playlist/cached") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -381,7 +391,9 @@ fun LibraryPlaylistsScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
+                                            navController.navigate("auto_playlist/uploaded") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                         .animateItem(),
                             )
@@ -466,7 +478,9 @@ fun LibraryPlaylistsScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("auto_playlist/liked")
+                                            navController.navigate("auto_playlist/liked") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                     )
                                     .animateItem(),
@@ -488,7 +502,9 @@ fun LibraryPlaylistsScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("auto_playlist/downloaded")
+                                            navController.navigate("auto_playlist/downloaded") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                     )
                                     .animateItem(),
@@ -510,7 +526,9 @@ fun LibraryPlaylistsScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("top_playlist/$topSize")
+                                            navController.navigate("top_playlist/$topSize") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                     )
                                     .animateItem(),
@@ -532,7 +550,9 @@ fun LibraryPlaylistsScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("cache_playlist/cached")
+                                            navController.navigate("cache_playlist/cached") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                     )
                                     .animateItem(),
@@ -553,7 +573,9 @@ fun LibraryPlaylistsScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
+                                            navController.navigate("auto_playlist/uploaded") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                         .animateItem(),
                             )

@@ -534,7 +534,9 @@ fun ArtistScreen(
                                 title = stringResource(R.string.songs),
                                 modifier = Modifier.animateItem(),
                                 onClick = {
-                                    navController.navigate("artist/${viewModel.artistId}/songs")
+                                    navController.navigate("artist/${viewModel.artistId}/songs") {
+                                        launchSingleTop = true
+                                    }
                                 }
                             )
                         }
@@ -609,7 +611,9 @@ fun ArtistScreen(
                                 title = stringResource(R.string.albums),
                                 modifier = Modifier.animateItem(),
                                 onClick = {
-                                    navController.navigate("artist/${viewModel.artistId}/albums")
+                                    navController.navigate("artist/${viewModel.artistId}/albums") {
+                                        launchSingleTop = true
+                                    }
                                 }
                             )
                         }
@@ -635,7 +639,9 @@ fun ArtistScreen(
                                         modifier = Modifier
                                             .combinedClickable(
                                                 onClick = {
-                                                    navController.navigate("album/${album.id}")
+                                                    navController.navigate("album/${album.id}") {
+                                                        launchSingleTop = true
+                                                    }
                                                 },
                                                 onLongClick = {
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -665,7 +671,9 @@ fun ArtistScreen(
                                         {
                                             navController.navigate(
                                                 "artist/${viewModel.artistId}/items?browseId=${it.browseId}?params=${it.params}",
-                                            )
+                                            ) {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     },
                                 )
@@ -758,9 +766,15 @@ fun ArtistScreen(
                                                                     ),
                                                                 )
 
-                                                            is AlbumItem -> navController.navigate("album/${item.id}")
-                                                            is ArtistItem -> navController.navigate("artist/${item.id}")
-                                                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                                            is AlbumItem -> navController.navigate("album/${item.id}") {
+                                                                launchSingleTop = true
+                                                            }
+                                                            is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                                                launchSingleTop = true
+                                                            }
+                                                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                                                launchSingleTop = true
+                                                            }
                                                         }
                                                     },
                                                     onLongClick = {

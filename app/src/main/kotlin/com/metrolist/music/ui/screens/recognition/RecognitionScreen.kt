@@ -189,7 +189,9 @@ fun RecognitionScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate("recognition_history") }) {
+                    IconButton(onClick = { navController.navigate("recognition_history") {
+                        launchSingleTop = true
+                    } }) {
                         Icon(
                             painter = painterResource(R.drawable.history),
                             contentDescription = stringResource(R.string.recognition_history)
@@ -232,7 +234,9 @@ fun RecognitionScreen(
                             onPlayOnApp = { result ->
                                 // Search for the track on YouTube Music
                                 val searchQuery = "${result.title} ${result.artist}"
-                                navController.navigate("search/${java.net.URLEncoder.encode(searchQuery, "UTF-8")}")
+                                navController.navigate("search/${java.net.URLEncoder.encode(searchQuery, "UTF-8")}") {
+                                    launchSingleTop = true
+                                }
                             },
                             onTryAgain = {
                                 startRecognition()

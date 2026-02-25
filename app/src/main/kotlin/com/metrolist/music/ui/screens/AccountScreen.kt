@@ -94,7 +94,9 @@ fun AccountScreen(
                         modifier = Modifier
                             .combinedClickable(
                                 onClick = {
-                                    navController.navigate("online_playlist/${item.id}")
+                                    navController.navigate("online_playlist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -130,7 +132,9 @@ fun AccountScreen(
                         modifier = Modifier
                             .combinedClickable(
                                 onClick = {
-                                    navController.navigate("album/${item.id}")
+                                    navController.navigate("album/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -166,7 +170,9 @@ fun AccountScreen(
                         modifier = Modifier
                             .combinedClickable(
                                 onClick = {
-                                    navController.navigate("artist/${item.id}")
+                                    navController.navigate("artist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)

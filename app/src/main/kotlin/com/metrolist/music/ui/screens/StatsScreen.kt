@@ -318,7 +318,9 @@ fun StatsScreen(
                             Modifier
                                 .combinedClickable(
                                     onClick = {
-                                        navController.navigate("artist/${artist.id}")
+                                        navController.navigate("artist/${artist.id}") {
+                                            launchSingleTop = true
+                                        }
                                     },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -370,7 +372,9 @@ fun StatsScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("album/${album.id}")
+                                            navController.navigate("album/${album.id}") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -423,7 +427,9 @@ fun StatsScreen(
             },
             actions = {
                 IconButton(
-                    onClick = { navController.navigate("settings/listening_statistics") }
+                    onClick = { navController.navigate("settings/listening_statistics") {
+                        launchSingleTop = true
+                    } }
                 ) {
                     Icon(
                         painterResource(R.drawable.today),

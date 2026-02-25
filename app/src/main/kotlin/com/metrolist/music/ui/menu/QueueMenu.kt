@@ -147,7 +147,9 @@ fun QueueMenu(
                     modifier = Modifier
                         .height(ListItemHeight)
                         .clickable {
-                            navController.navigate("artist/${artist.id}")
+                            navController.navigate("artist/${artist.id}") {
+                                launchSingleTop = true
+                            }
                             showSelectArtistDialog = false
                             playerBottomSheetState.collapseSoft()
                             onDismiss()
@@ -464,7 +466,9 @@ fun QueueMenu(
                                     },
                                     onClick = {
                                         if (mediaMetadata.artists.size == 1) {
-                                            navController.navigate("artist/${mediaMetadata.artists[0].id}")
+                                            navController.navigate("artist/${mediaMetadata.artists[0].id}") {
+                                                launchSingleTop = true
+                                            }
                                             playerBottomSheetState.collapseSoft()
                                             onDismiss()
                                         } else {
@@ -493,7 +497,9 @@ fun QueueMenu(
                                         )
                                     },
                                     onClick = {
-                                        navController.navigate("album/${mediaMetadata.album.id}")
+                                        navController.navigate("album/${mediaMetadata.album.id}") {
+                                            launchSingleTop = true
+                                        }
                                         playerBottomSheetState.collapseSoft()
                                         onDismiss()
                                     }

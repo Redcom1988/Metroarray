@@ -349,7 +349,9 @@ fun LibraryMixScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("auto_playlist/liked")
+                                        navController.navigate("auto_playlist/liked") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -368,7 +370,9 @@ fun LibraryMixScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("auto_playlist/downloaded")
+                                        navController.navigate("auto_playlist/downloaded") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -387,7 +391,9 @@ fun LibraryMixScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("top_playlist/$topSize")
+                                        navController.navigate("top_playlist/$topSize") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -406,7 +412,9 @@ fun LibraryMixScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("cache_playlist/cached")
+                                        navController.navigate("cache_playlist/cached") {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     .animateItem(),
                             )
@@ -425,7 +433,9 @@ fun LibraryMixScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
+                                            navController.navigate("auto_playlist/uploaded") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                         .animateItem(),
                             )
@@ -464,7 +474,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("local_playlist/${item.id}")
+                                                navController.navigate("local_playlist/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -507,7 +519,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("artist/${item.id}")
+                                                navController.navigate("artist/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -552,7 +566,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("album/${item.id}")
+                                                navController.navigate("album/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -611,10 +627,12 @@ fun LibraryMixScreen(
                                 modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/liked")
-                                        },
+                                        .combinedClickable(
+                                            onClick = {
+                                                navController.navigate("auto_playlist/liked") {
+                                                    launchSingleTop = true
+                                                }
+                                            },
                                     )
                                     .animateItem(),
                             )
@@ -633,10 +651,12 @@ fun LibraryMixScreen(
                                 modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/downloaded")
-                                        },
+                                        .combinedClickable(
+                                            onClick = {
+                                                navController.navigate("auto_playlist/downloaded") {
+                                                    launchSingleTop = true
+                                                }
+                                            },
                                     )
                                     .animateItem(),
                             )
@@ -655,10 +675,12 @@ fun LibraryMixScreen(
                                 modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("top_playlist/$topSize")
-                                        },
+                                        .combinedClickable(
+                                            onClick = {
+                                                navController.navigate("top_playlist/$topSize") {
+                                                    launchSingleTop = true
+                                                }
+                                            },
                                     )
                                     .animateItem(),
                             )
@@ -679,7 +701,9 @@ fun LibraryMixScreen(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("cache_playlist/cached")
+                                            navController.navigate("cache_playlist/cached") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                     )
                                     .animateItem(),
@@ -700,7 +724,9 @@ fun LibraryMixScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
+                                            navController.navigate("auto_playlist/uploaded") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                         .animateItem(),
                             )
@@ -722,7 +748,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("local_playlist/${item.id}")
+                                                navController.navigate("local_playlist/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -748,7 +776,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("artist/${item.id}")
+                                                navController.navigate("artist/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -777,7 +807,9 @@ fun LibraryMixScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("album/${item.id}")
+                                                navController.navigate("album/${item.id}") {
+                                                    launchSingleTop = true
+                                                }
                                             },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)

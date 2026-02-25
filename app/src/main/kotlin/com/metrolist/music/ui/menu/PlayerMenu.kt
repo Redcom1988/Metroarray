@@ -188,7 +188,9 @@ fun PlayerMenu(
                         .fillParentMaxWidth()
                         .height(ListItemHeight)
                         .clickable {
-                            navController.navigate("artist/${artist.id}")
+                            navController.navigate("artist/${artist.id}") {
+                                launchSingleTop = true
+                            }
                             showSelectArtistDialog = false
                             playerBottomSheetState.collapseSoft()
                             onDismiss()
@@ -365,7 +367,9 @@ fun PlayerMenu(
                                 },
                                 onClick = {
                                     if (mediaMetadata.artists.size == 1) {
-                                        navController.navigate("artist/${mediaMetadata.artists[0].id}")
+                                        navController.navigate("artist/${mediaMetadata.artists[0].id}") {
+                                            launchSingleTop = true
+                                        }
                                         playerBottomSheetState.collapseSoft()
                                         onDismiss()
                                     } else {
@@ -394,7 +398,9 @@ fun PlayerMenu(
                                     )
                                 },
                                 onClick = {
-                                    navController.navigate("album/${mediaMetadata.album.id}")
+                                    navController.navigate("album/${mediaMetadata.album.id}") {
+                                        launchSingleTop = true
+                                    }
                                     playerBottomSheetState.collapseSoft()
                                     onDismiss()
                                 }
@@ -616,7 +622,9 @@ fun PlayerMenu(
                                     )
                                 },
                                 onClick = {
-                                    navController.navigate("equalizer")
+                                    navController.navigate("equalizer") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 }
                             )

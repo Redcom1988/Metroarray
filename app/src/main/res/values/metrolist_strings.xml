@@ -633,6 +633,15 @@
     <string name="ai_deepl_formality_default">Default</string>
     <string name="ai_deepl_formality_more">More Formal</string>
     <string name="ai_deepl_formality_less">Less Formal</string>
+    <string name="ai_auto_translate">Auto translate all songs</string>
+    <string name="ai_language_mismatch">Translate only on language mismatch</string>
+    <string name="ai_setup_step_1">1. Select your Provider (e.g. OpenRouter, ChatGPT) or \'Custom\'.</string>
+    <string name="ai_setup_step_2">2. Enter your API Key.</string>
+    <string name="ai_setup_step_3">3. If \'Custom\', enter the Base URL provided by your service.</string>
+    <string name="ai_setup_api_need">Need an API Key? Try</string>
+    <string name="ai_setup_api_provider">OpenRouter.ai</string>
+    <string name="ai_setup_api_end">for access to many models.</string>
+    <string name="ai_language_mismatch_desc">Skip translation if lyrics are identified as your system language</string>
     
     <!-- Crash Handler -->
     <string name="crash_title">App Crashed</string>

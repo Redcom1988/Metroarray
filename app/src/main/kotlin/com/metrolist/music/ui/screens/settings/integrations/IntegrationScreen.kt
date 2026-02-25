@@ -47,14 +47,18 @@ fun IntegrationScreen(
                     icon = painterResource(R.drawable.discord),
                     title = { Text(stringResource(R.string.discord_integration)) },
                     onClick = {
-                        navController.navigate("settings/integrations/discord")
+                        navController.navigate("settings/integrations/discord") {
+                            launchSingleTop = true
+                        }
                     }
                 ),
                 IntegrationCardItem(
                     icon = painterResource(R.drawable.music_note),
                     title = { Text(stringResource(R.string.lastfm_integration)) },
                     onClick = {
-                        navController.navigate("settings/integrations/lastfm")
+                        navController.navigate("settings/integrations/lastfm") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             )

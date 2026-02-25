@@ -512,7 +512,9 @@ fun DiscordSettings(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     OutlinedButton(
-                        onClick = { navController.navigate("settings/discord/login") },
+                        onClick = { navController.navigate("settings/discord/login") {
+                            launchSingleTop = true
+                        } },
                     ) {
                         Text(stringResource(R.string.action_login))
                     }

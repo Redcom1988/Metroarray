@@ -148,7 +148,9 @@ fun YouTubeSongMenu(
                     Modifier  
                         .height(ListItemHeight)  
                         .clickable {  
-                            navController.navigate("artist/${artist.id}")  
+                            navController.navigate("artist/${artist.id}") {
+                                launchSingleTop = true
+                            }
                             showSelectArtistDialog = false  
                             onDismiss()  
                         }  
@@ -161,7 +163,9 @@ fun YouTubeSongMenu(
                             .fillParentMaxWidth()  
                             .height(ListItemHeight)  
                             .clickable {  
-                                navController.navigate("artist/${artist.id}")  
+                                navController.navigate("artist/${artist.id}") {
+                                    launchSingleTop = true
+                                }
                                 showSelectArtistDialog = false  
                                 onDismiss()  
                             }  
@@ -548,7 +552,9 @@ fun YouTubeSongMenu(
                                 },
                                 onClick = {
                                     if (artists.size == 1) {
-                                        navController.navigate("artist/${artists[0].id}")
+                                        navController.navigate("artist/${artists[0].id}") {
+                                            launchSingleTop = true
+                                        }
                                         onDismiss()
                                     } else {
                                         showSelectArtistDialog = true
@@ -569,7 +575,9 @@ fun YouTubeSongMenu(
                                     )
                                 },
                                 onClick = {
-                                    navController.navigate("album/${album.id}")
+                                    navController.navigate("album/${album.id}") {
+                                        launchSingleTop = true
+                                    }
                                     onDismiss()
                                 }
                             )

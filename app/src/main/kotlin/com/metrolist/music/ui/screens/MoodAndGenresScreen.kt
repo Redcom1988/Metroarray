@@ -88,7 +88,9 @@ fun MoodAndGenresScreen(
                                 MoodAndGenresButton(
                                     title = it.title,
                                     onClick = {
-                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
+                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}") {
+                                            launchSingleTop = true
+                                        }
                                     },
                                     modifier =
                                     Modifier

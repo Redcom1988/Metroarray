@@ -189,9 +189,15 @@ fun ArtistItemsScreen(
                                     }
                                 }
 
-                                is AlbumItem -> navController.navigate("album/${item.id}")
-                                is ArtistItem -> navController.navigate("artist/${item.id}")
-                                is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                is AlbumItem -> navController.navigate("album/${item.id}") {
+                                    launchSingleTop = true
+                                }
+                                is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                    launchSingleTop = true
+                                }
+                                is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                    launchSingleTop = true
+                                }
                             }
                         },
                 )
@@ -238,9 +244,15 @@ fun ArtistItemsScreen(
                                         )
                                     )
 
-                                    is AlbumItem -> navController.navigate("album/${item.id}")
-                                    is ArtistItem -> navController.navigate("artist/${item.id}")
-                                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                    is AlbumItem -> navController.navigate("album/${item.id}") {
+                                        launchSingleTop = true
+                                    }
+                                    is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
+                                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                             },
                             onLongClick = {

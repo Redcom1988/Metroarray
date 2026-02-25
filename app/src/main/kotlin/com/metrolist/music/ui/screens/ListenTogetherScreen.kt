@@ -402,7 +402,9 @@ fun ListenTogetherScreen(
         // Settings link
         item {
             SettingsLinkCard(
-                onClick = { navController.navigate("settings/integrations/listen_together") }
+                onClick = { navController.navigate("settings/integrations/listen_together") {
+                    launchSingleTop = true
+                } }
             )
         }
     }

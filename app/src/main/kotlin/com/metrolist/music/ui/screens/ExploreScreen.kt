@@ -325,7 +325,9 @@ fun ExploreScreen(
                     NavigationTitle(
                         title = stringResource(R.string.new_release_albums),
                         onClick = {
-                            navController.navigate("new_release")
+                            navController.navigate("new_release") {
+                                launchSingleTop = true
+                            }
                         },
                     )
                     LazyRow(
@@ -345,7 +347,9 @@ fun ExploreScreen(
                                 modifier = Modifier
                                     .combinedClickable(
                                         onClick = {
-                                            navController.navigate("album/${album.id}")
+                                            navController.navigate("album/${album.id}") {
+                                                launchSingleTop = true
+                                            }
                                         },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -417,7 +421,9 @@ fun ExploreScreen(
                     NavigationTitle(
                         title = stringResource(R.string.mood_and_genres),
                         onClick = {
-                            navController.navigate("mood_and_genres")
+                            navController.navigate("mood_and_genres") {
+                                launchSingleTop = true
+                            }
                         },
                     )
                     LazyHorizontalGrid(
@@ -429,7 +435,9 @@ fun ExploreScreen(
                             MoodAndGenresButton(
                                 title = it.title,
                                 onClick = {
-                                    navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
+                                    navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}") {
+                                        launchSingleTop = true
+                                    }
                                 },
                                 modifier = Modifier
                                     .padding(6.dp)

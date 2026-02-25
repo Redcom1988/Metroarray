@@ -126,9 +126,13 @@ fun AccountSettings(
         val accountSectionModifier = Modifier.clickable {
             onClose()
             if (isLoggedIn) {
-                navController.navigate("account")
+                navController.navigate("account") {
+                    launchSingleTop = true
+                }
             } else {
-                navController.navigate("login")
+                navController.navigate("login") {
+                    launchSingleTop = true
+                }
             }
         }
 
@@ -285,7 +289,9 @@ fun AccountSettings(
                 icon = { Icon(painterResource(R.drawable.integration), null) },
                 onClick = {
                     onClose()
-                    navController.navigate("settings/integrations")
+                    navController.navigate("settings/integrations") {
+                        launchSingleTop = true
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -309,7 +315,9 @@ fun AccountSettings(
                 },
                 onClick = {
                     onClose()
-                    navController.navigate("settings")
+                    navController.navigate("settings") {
+                        launchSingleTop = true
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -325,7 +333,9 @@ fun AccountSettings(
                 },
                 onClick = {
                     onClose()
-                    navController.navigate("stats")
+                    navController.navigate("stats") {
+                        launchSingleTop = true
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -341,7 +351,9 @@ fun AccountSettings(
                 },
                 onClick = {
                     onClose()
-                    navController.navigate("listen_together_from_dialog")
+                    navController.navigate("listen_together_from_dialog") {
+                        launchSingleTop = true
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

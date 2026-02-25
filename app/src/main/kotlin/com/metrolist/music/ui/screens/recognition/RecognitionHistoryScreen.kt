@@ -217,7 +217,9 @@ fun RecognitionHistoryScreen(
                         onClick = {
                             // Search for the track on YouTube Music
                             val searchQuery = "${item.title} ${item.artist}"
-                            navController.navigate("search/${java.net.URLEncoder.encode(searchQuery, "UTF-8")}")
+                            navController.navigate("search/${java.net.URLEncoder.encode(searchQuery, "UTF-8")}") {
+                                launchSingleTop = true
+                            }
                         },
                         onDelete = {
                             itemToDelete = item

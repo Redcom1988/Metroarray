@@ -750,7 +750,9 @@ fun AppearanceSettings(
                         icon = painterResource(R.drawable.palette),
                         title = { Text(stringResource(R.string.theme)) },
                         description = { Text(stringResource(R.string.theme_desc)) },
-                        onClick = { navController.navigate("settings/appearance/theme") }
+                        onClick = { navController.navigate("settings/appearance/theme") {
+                            launchSingleTop = true
+                        } }
                     )
                 )
             }

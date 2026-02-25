@@ -83,9 +83,15 @@ package com.metrolist.music.ui.screens
                          .combinedClickable(
                              onClick = {
                                  when (item) {
-                                     is AlbumItem -> navController.navigate("album/${item.id}")
-                                     is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                     is ArtistItem -> navController.navigate("artist/${item.id}")
+                                     is AlbumItem -> navController.navigate("album/${item.id}") {
+                                         launchSingleTop = true
+                                     }
+                                     is PlaylistItem -> navController.navigate("online_playlist/${item.id}") {
+                                         launchSingleTop = true
+                                     }
+                                     is ArtistItem -> navController.navigate("artist/${item.id}") {
+                                         launchSingleTop = true
+                                     }
                                      else -> {
                                          // Do nothing
                                      }

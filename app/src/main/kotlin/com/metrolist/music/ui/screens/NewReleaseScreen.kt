@@ -80,7 +80,9 @@ fun NewReleaseScreen(
                 Modifier
                     .combinedClickable(
                         onClick = {
-                            navController.navigate("album/${album.id}")
+                            navController.navigate("album/${album.id}") {
+                                launchSingleTop = true
+                            }
                         },
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)

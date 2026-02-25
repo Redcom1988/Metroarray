@@ -558,7 +558,9 @@ class MainActivity : ComponentActivity() {
                 val onSearch: (String) -> Unit = remember {
                     { searchQuery ->
                         if (searchQuery.isNotEmpty()) {
-                            navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}")
+                            navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}") {
+                                launchSingleTop = true
+                            }
 
                             if (dataStore[PauseSearchHistoryKey] != true) {
                                 lifecycleScope.launch(Dispatchers.IO) {
@@ -827,7 +829,9 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                             if (showHistoryButton) {
-                                                IconButton(onClick = { navController.navigate("history") }) {
+                                                IconButton(onClick = { navController.navigate("history") {
+                                                    launchSingleTop = true
+                                                } }) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.history),
                                                         contentDescription = stringResource(R.string.history)
@@ -1183,27 +1187,37 @@ class MainActivity : ComponentActivity() {
                         YouTube.albumSongs(playlistId).onSuccess { songs ->
                             songs.firstOrNull()?.album?.id?.let { browseId ->
                                 withContext(Dispatchers.Main) {
-                                    navController.navigate("album/$browseId")
+                                    navController.navigate("album/$browseId") {
+                                        launchSingleTop = true
+                                    }
                                 }
                             }
                         }.onFailure { reportException(it) }
                     }
                 } else {
-                    navController.navigate("online_playlist/$playlistId")
+                    navController.navigate("online_playlist/$playlistId") {
+                        launchSingleTop = true
+                    }
                 }
             }
 
             "browse" -> uri.lastPathSegment?.let { browseId ->
-                navController.navigate("album/$browseId")
+                navController.navigate("album/$browseId") {
+                    launchSingleTop = true
+                }
             }
 
             "channel", "c" -> uri.lastPathSegment?.let { artistId ->
-                navController.navigate("artist/$artistId")
+                navController.navigate("artist/$artistId") {
+                    launchSingleTop = true
+                }
             }
 
             "search" -> {
                 uri.getQueryParameter("q")?.let {
-                    navController.navigate("search/${URLEncoder.encode(it, "UTF-8")}")
+                    navController.navigate("search/${URLEncoder.encode(it, "UTF-8")}") {
+                        launchSingleTop = true
+                    }
                 }
             }
 

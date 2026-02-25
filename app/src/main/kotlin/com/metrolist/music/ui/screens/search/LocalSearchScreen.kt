@@ -247,7 +247,9 @@ fun LocalSearchScreen(
                             modifier = Modifier
                                 .clickable {
                                     onDismiss()
-                                    navController.navigate("album/${item.id}")
+                                    navController.navigate("album/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                                 .animateItem(),
                         )
@@ -257,7 +259,9 @@ fun LocalSearchScreen(
                             modifier = Modifier
                                 .clickable {
                                     onDismiss()
-                                    navController.navigate("artist/${item.id}")
+                                    navController.navigate("artist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                                 .animateItem(),
                         )
@@ -267,7 +271,9 @@ fun LocalSearchScreen(
                             modifier = Modifier
                                 .clickable {
                                     onDismiss()
-                                    navController.navigate("local_playlist/${item.id}")
+                                    navController.navigate("local_playlist/${item.id}") {
+                                        launchSingleTop = true
+                                    }
                                 }
                                 .animateItem(),
                         )

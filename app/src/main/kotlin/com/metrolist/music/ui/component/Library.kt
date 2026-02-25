@@ -56,7 +56,9 @@ fun LibraryArtistListItem(
     modifier = modifier
         .fillMaxWidth()
         .clickable {
-            navController.navigate("artist/${artist.id}")
+            navController.navigate("artist/${artist.id}") {
+                launchSingleTop = true
+            }
         }
 )
 
@@ -75,7 +77,9 @@ fun LibraryArtistGridItem(
         .fillMaxWidth()
         .combinedClickable(
             onClick = {
-                navController.navigate("artist/${artist.id}")
+                navController.navigate("artist/${artist.id}") {
+                    launchSingleTop = true
+                }
             },
             onLongClick = {
                 menuState.show {
@@ -122,7 +126,9 @@ fun LibraryAlbumListItem(
     modifier = modifier
         .fillMaxWidth()
         .clickable {
-            navController.navigate("album/${album.id}")
+            navController.navigate("album/${album.id}") {
+                launchSingleTop = true
+            }
         }
 )
 
@@ -146,7 +152,9 @@ fun LibraryAlbumGridItem(
         .fillMaxWidth()
         .combinedClickable(
             onClick = {
-                navController.navigate("album/${album.id}")
+                navController.navigate("album/${album.id}") {
+                    launchSingleTop = true
+                }
             },
             onLongClick = {
                 menuState.show {
@@ -220,9 +228,13 @@ fun LibraryPlaylistListItem(
         .fillMaxWidth()
         .clickable {
             if (!playlist.playlist.isEditable && playlist.songCount == 0 && playlist.playlist.remoteSongCount != 0)
-                navController.navigate("online_playlist/${playlist.playlist.browseId}")
+                navController.navigate("online_playlist/${playlist.playlist.browseId}") {
+                    launchSingleTop = true
+                }
             else
-                navController.navigate("local_playlist/${playlist.id}")
+                navController.navigate("local_playlist/${playlist.id}") {
+                    launchSingleTop = true
+                }
         }
 )
 
@@ -242,9 +254,13 @@ fun LibraryPlaylistGridItem(
         .combinedClickable(
             onClick = {
                 if (!playlist.playlist.isEditable && playlist.songCount == 0 && playlist.playlist.remoteSongCount != 0)
-                    navController.navigate("online_playlist/${playlist.playlist.browseId}")
+                    navController.navigate("online_playlist/${playlist.playlist.browseId}") {
+                        launchSingleTop = true
+                    }
                 else
-                    navController.navigate("local_playlist/${playlist.id}")
+                    navController.navigate("local_playlist/${playlist.id}") {
+                        launchSingleTop = true
+                    }
             },
             onLongClick = {
                 menuState.show {
