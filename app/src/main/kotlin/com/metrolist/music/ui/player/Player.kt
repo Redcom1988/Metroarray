@@ -1741,6 +1741,10 @@ fun InlineLyricsView(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
+    
+    // Check if song is tagged as instrumental
+    val song by database.song(mediaMetadata?.id).collectAsState(initial = null)
+    val isInstrumental = song?.song?.isInstrumental ?: false
 
     LaunchedEffect(mediaMetadata?.id, currentLyrics) {
         if (mediaMetadata != null && currentLyrics == null) {
@@ -1772,6 +1776,14 @@ fun InlineLyricsView(
         when {
             lyrics == null -> {
                 ContainedLoadingIndicator()
+            }
+            isInstrumental -> {
+                Text(
+                    text = stringResource(R.string.tagged_as_instrumental),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
             }
             lyrics == LyricsEntity.LYRICS_NOT_FOUND -> {
                 Text(

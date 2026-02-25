@@ -186,6 +186,15 @@
     <string name="configure_supported_links">Configure supported links</string>
     <string name="intent_supported_links_not_found">Couldn\'t find supported links settings, please configure them manually</string>
     <string name="set_first_lyrics_provider">Preferred lyrics provider</string>
+    <string name="lyrics_search_show_provider_selection">Select provider before search</string>
+    <string name="lyrics_search_show_provider_selection_desc">Choose which lyrics provider to query when manually searching</string>
+    <string name="prefer_synced_lyrics">Prefer synced lyrics</string>
+    <string name="prefer_synced_lyrics_desc">Try to find synced lyrics first, show unsynced if unavailable</string>
+    <string name="select_lyrics_provider">Select Lyrics Provider</string>
+    <string name="provider_disabled">(Disabled)</string>
+    <string name="tag_as_instrumental">Tag as instrumental</string>
+    <string name="tag_as_instrumental_desc">Mark this track as instrumental (no vocals)</string>
+    <string name="tagged_as_instrumental">This track is tagged as instrumental</string>
     <string name="config_proxy">Configure proxy</string>
     <string name="proxy_username">Proxy username</string>
     <string name="proxy_password">Proxy password</string>

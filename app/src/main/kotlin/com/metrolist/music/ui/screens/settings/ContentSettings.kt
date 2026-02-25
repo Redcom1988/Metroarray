@@ -66,6 +66,8 @@ import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HideYoutubeShortsKey
 import com.metrolist.music.constants.LanguageCodeToName
+import com.metrolist.music.constants.LyricsSearchShowProviderSelectionKey
+import com.metrolist.music.constants.PreferSyncedLyricsKey
 import com.metrolist.music.constants.PreferredLyricsProvider
 import com.metrolist.music.constants.PreferredLyricsProviderKey
 import com.metrolist.music.constants.ProxyEnabledKey
@@ -124,6 +126,10 @@ fun ContentSettings(
             key = PreferredLyricsProviderKey,
             defaultValue = PreferredLyricsProvider.BETTER_LYRICS,
         )
+    val (lyricsSearchShowProviderSelection, onLyricsSearchShowProviderSelectionChange) = 
+        rememberPreference(key = LyricsSearchShowProviderSelectionKey, defaultValue = true)
+    val (preferSyncedLyrics, onPreferSyncedLyricsChange) = 
+        rememberPreference(key = PreferSyncedLyricsKey, defaultValue = true)
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
     val (showWrappedCard, onShowWrappedCardChange) = rememberPreference(key = ShowWrappedCardKey, defaultValue = false)
@@ -767,6 +773,48 @@ fun ContentSettings(
                         }
                     },
                     enabled = enabledProvidersCount >= 2
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.search),
+                    title = { Text(stringResource(R.string.lyrics_search_show_provider_selection)) },
+                    description = { Text(stringResource(R.string.lyrics_search_show_provider_selection_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = lyricsSearchShowProviderSelection,
+                            onCheckedChange = onLyricsSearchShowProviderSelectionChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (lyricsSearchShowProviderSelection) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onLyricsSearchShowProviderSelectionChange(!lyricsSearchShowProviderSelection) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.sync),
+                    title = { Text(stringResource(R.string.prefer_synced_lyrics)) },
+                    description = { Text(stringResource(R.string.prefer_synced_lyrics_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = preferSyncedLyrics,
+                            onCheckedChange = onPreferSyncedLyricsChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (preferSyncedLyrics) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onPreferSyncedLyricsChange(!preferSyncedLyrics) }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language_korean_latin),

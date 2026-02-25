@@ -56,4 +56,6 @@ constructor(
         get() = song.thumbnailUrl
     val romanizeLyrics: Boolean
         get() = song.romanizeLyrics
+    val isInstrumental: Boolean
+        get() = song.isInstrumental
 }

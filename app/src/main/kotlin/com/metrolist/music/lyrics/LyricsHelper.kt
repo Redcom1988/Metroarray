@@ -7,8 +7,10 @@ package com.metrolist.music.lyrics
 
 import android.content.Context
 import android.util.LruCache
+import com.metrolist.music.constants.PreferSyncedLyricsKey
 import com.metrolist.music.constants.PreferredLyricsProvider
 import com.metrolist.music.constants.PreferredLyricsProviderKey
+import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
 import com.metrolist.music.extensions.toEnum
 import com.metrolist.music.models.MediaMetadata
@@ -22,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +34,7 @@ class LyricsHelper
 constructor(
     @ApplicationContext private val context: Context,
     private val networkConnectivity: NetworkConnectivityObserver,
+    private val database: MusicDatabase,
 ) {
     private var lyricsProviders =
         listOf(
@@ -89,6 +93,12 @@ constructor(
 
     suspend fun getLyrics(mediaMetadata: MediaMetadata): LyricsWithProvider {
         currentLyricsJob?.cancel()
+        
+        // Check if song is tagged as instrumental
+        val song = database.song(mediaMetadata.id).first()
+        if (song?.song?.isInstrumental == true) {
+            return LyricsWithProvider(LYRICS_NOT_FOUND, "Instrumental")
+        }
 
         val cached = cache.get(mediaMetadata.id)?.firstOrNull()
         if (cached != null) {
@@ -109,26 +119,80 @@ constructor(
             return LyricsWithProvider(LYRICS_NOT_FOUND, "Unknown")
         }
 
+        // Get prefer synced lyrics setting
+        val preferSynced = context.dataStore.data.first()[PreferSyncedLyricsKey] ?: true
+
         val scope = CoroutineScope(SupervisorJob())
         val deferred = scope.async {
-            for (provider in lyricsProviders) {
-                if (provider.isEnabled(context)) {
-                    try {
-                        val result = provider.getLyrics(
-                            mediaMetadata.id,
-                            mediaMetadata.title,
-                            mediaMetadata.artists.joinToString { it.name },
-                            mediaMetadata.duration,
-                            mediaMetadata.album?.title,
-                        )
-                        result.onSuccess { lyrics ->
-                            return@async LyricsWithProvider(lyrics, provider.name)
-                        }.onFailure {
-                            reportException(it)
+            if (preferSynced) {
+                // First pass: Try to find synced lyrics only
+                for (provider in lyricsProviders) {
+                    if (provider.isEnabled(context)) {
+                        try {
+                            val result = provider.getLyrics(
+                                mediaMetadata.id,
+                                mediaMetadata.title,
+                                mediaMetadata.artists.joinToString { it.name },
+                                mediaMetadata.duration,
+                                mediaMetadata.album?.title,
+                            )
+                            result.onSuccess { lyrics ->
+                                if (lyrics.startsWith("[")) {  // Is synced
+                                    return@async LyricsWithProvider(lyrics, provider.name)
+                                }
+                            }.onFailure {
+                                reportException(it)
+                            }
+                        } catch (e: Exception) {
+                            // Catch network-related exceptions like UnresolvedAddressException
+                            reportException(e)
                         }
-                    } catch (e: Exception) {
-                        // Catch network-related exceptions like UnresolvedAddressException
-                        reportException(e)
+                    }
+                }
+                
+                // Second pass: Accept unsynced lyrics as fallback
+                for (provider in lyricsProviders) {
+                    if (provider.isEnabled(context)) {
+                        try {
+                            val result = provider.getLyrics(
+                                mediaMetadata.id,
+                                mediaMetadata.title,
+                                mediaMetadata.artists.joinToString { it.name },
+                                mediaMetadata.duration,
+                                mediaMetadata.album?.title,
+                            )
+                            result.onSuccess { lyrics ->
+                                return@async LyricsWithProvider(lyrics, provider.name)
+                            }.onFailure {
+                                reportException(it)
+                            }
+                        } catch (e: Exception) {
+                            // Catch network-related exceptions like UnresolvedAddressException
+                            reportException(e)
+                        }
+                    }
+                }
+            } else {
+                // Original behavior: first successful result
+                for (provider in lyricsProviders) {
+                    if (provider.isEnabled(context)) {
+                        try {
+                            val result = provider.getLyrics(
+                                mediaMetadata.id,
+                                mediaMetadata.title,
+                                mediaMetadata.artists.joinToString { it.name },
+                                mediaMetadata.duration,
+                                mediaMetadata.album?.title,
+                            )
+                            result.onSuccess { lyrics ->
+                                return@async LyricsWithProvider(lyrics, provider.name)
+                            }.onFailure {
+                                reportException(it)
+                            }
+                        } catch (e: Exception) {
+                            // Catch network-related exceptions like UnresolvedAddressException
+                            reportException(e)
+                        }
                     }
                 }
             }
@@ -146,13 +210,19 @@ constructor(
         songArtists: String,
         duration: Int,
         album: String? = null,
+        singleProvider: String? = null,
         callback: (LyricsResult) -> Unit,
     ) {
         currentLyricsJob?.cancel()
 
         val cacheKey = "$songArtists-$songTitle".replace(" ", "")
         cache.get(cacheKey)?.let { results ->
-            results.forEach {
+            val filteredResults = if (singleProvider != null) {
+                results.filter { it.providerName == singleProvider }
+            } else {
+                results
+            }
+            filteredResults.forEach {
                 callback(it)
             }
             return
@@ -172,9 +242,16 @@ constructor(
             return
         }
 
+        // Filter providers if singleProvider is specified
+        val providersToQuery = if (singleProvider != null) {
+            lyricsProviders.filter { it.name == singleProvider }
+        } else {
+            lyricsProviders
+        }
+
         val allResult = mutableListOf<LyricsResult>()
         currentLyricsJob = CoroutineScope(SupervisorJob()).launch {
-            lyricsProviders.forEach { provider ->
+            providersToQuery.forEach { provider ->
                 if (provider.isEnabled(context)) {
                     try {
                         provider.getAllLyrics(mediaId, songTitle, songArtists, duration, album) { lyrics ->

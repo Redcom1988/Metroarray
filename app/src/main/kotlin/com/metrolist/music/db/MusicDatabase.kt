@@ -111,7 +111,7 @@ class MusicDatabase(
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 34,
+    version = 35,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -146,6 +146,7 @@ class MusicDatabase(
         AutoMigration(from = 31, to = 32),
         AutoMigration(from = 32, to = 33, spec = Migration32To33::class),
         AutoMigration(from = 33, to = 34, spec = Migration33To34::class),
+        AutoMigration(from = 34, to = 35, spec = Migration34To35::class),
     ],
 )
 @TypeConverters(Converters::class)
@@ -788,6 +789,26 @@ class Migration33To34 : AutoMigrationSpec {
         }
         if (!hasLocalFolderUri) {
             db.execSQL("ALTER TABLE playlist ADD COLUMN localFolderUri TEXT DEFAULT NULL")
+        }
+    }
+}
+
+class Migration34To35 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase) {
+        // Add isInstrumental column to song table if it doesn't exist
+        var hasIsInstrumental = false
+        db.query("PRAGMA table_info('song')").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            while (cursor.moveToNext()) {
+                val colName = if (nameIndex >= 0) cursor.getString(nameIndex) else null
+                if (colName == "isInstrumental") {
+                    hasIsInstrumental = true
+                    break
+                }
+            }
+        }
+        if (!hasIsInstrumental) {
+            db.execSQL("ALTER TABLE song ADD COLUMN isInstrumental INTEGER NOT NULL DEFAULT false")
         }
     }
 }

@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,11 +58,23 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.edit
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.R
+import com.metrolist.music.constants.AiProviderKey
+import com.metrolist.music.constants.DeeplApiKey
+import com.metrolist.music.constants.DeeplFormalityKey
+import com.metrolist.music.constants.LyricsSearchShowProviderSelectionKey
+import com.metrolist.music.constants.OpenRouterApiKey
+import com.metrolist.music.constants.OpenRouterBaseUrlKey
+import com.metrolist.music.constants.OpenRouterModelKey
+import com.metrolist.music.constants.PreferSyncedLyricsKey
+import com.metrolist.music.constants.TranslateLanguageKey
+import com.metrolist.music.constants.TranslateModeKey
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.db.entities.SongEntity
+import com.metrolist.music.lyrics.LyricsTranslationHelper
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.ListDialog
@@ -69,17 +83,10 @@ import com.metrolist.music.ui.component.Material3MenuItemData
 import com.metrolist.music.ui.component.NewAction
 import com.metrolist.music.ui.component.NewActionGrid
 import com.metrolist.music.ui.component.TextFieldDialog
-import com.metrolist.music.viewmodels.LyricsMenuViewModel
-import com.metrolist.music.constants.OpenRouterApiKey
-import com.metrolist.music.constants.DeeplApiKey
-import com.metrolist.music.constants.AiProviderKey
-import com.metrolist.music.constants.TranslateLanguageKey
-import com.metrolist.music.constants.TranslateModeKey
-import com.metrolist.music.constants.OpenRouterBaseUrlKey
-import com.metrolist.music.constants.OpenRouterModelKey
-import com.metrolist.music.constants.DeeplFormalityKey
-import com.metrolist.music.lyrics.LyricsTranslationHelper
+import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.viewmodels.LyricsMenuViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +100,7 @@ fun LyricsMenu(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
     
     val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
     val deeplApiKey by rememberPreference(DeeplApiKey, "")
@@ -102,6 +110,9 @@ fun LyricsMenu(
     val openRouterBaseUrl by rememberPreference(OpenRouterBaseUrlKey, "https://openrouter.ai/api/v1/chat/completions")
     val openRouterModel by rememberPreference(OpenRouterModelKey, "google/gemini-2.5-flash-lite")
     val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+    
+    // Provider selection feature toggle
+    val lyricsSearchShowProviderSelection by rememberPreference(LyricsSearchShowProviderSelectionKey, true)
 
     val hasApiKey = if (aiProvider == "DeepL") deeplApiKey.isNotBlank() else openRouterApiKey.isNotBlank()
 
@@ -204,20 +215,32 @@ fun LyricsMenu(
 
                 TextButton(
                     onClick = {
-                        // Try search regardless of network status indicator
-                        // as it might be a false negative
-                        viewModel.search(
-                            searchMediaMetadata.id,
-                            titleField.text,
-                            artistField.text,
-                            searchMediaMetadata.duration,
-                            searchMediaMetadata.album?.title
-                        )
-                        showSearchResultDialog = true
+                        showSearchDialog = false
                         
-                        // Show warning only if network is definitely unavailable
-                        if (!isNetworkAvailable) {
-                            Toast.makeText(context, context.getString(R.string.error_no_internet), Toast.LENGTH_SHORT).show()
+                        if (lyricsSearchShowProviderSelection) {
+                            // Open provider selection dialog with search parameters
+                            viewModel.openProviderSelectionDialog(
+                                searchMediaMetadata.id,
+                                titleField.text,
+                                artistField.text,
+                                searchMediaMetadata.duration,
+                                searchMediaMetadata.album?.title
+                            )
+                        } else {
+                            // Execute search immediately with all providers
+                            viewModel.search(
+                                searchMediaMetadata.id,
+                                titleField.text,
+                                artistField.text,
+                                searchMediaMetadata.duration,
+                                searchMediaMetadata.album?.title
+                            )
+                            showSearchResultDialog = true
+                            
+                            // Show warning only if network is definitely unavailable
+                            if (!isNetworkAvailable) {
+                                Toast.makeText(context, context.getString(R.string.error_no_internet), Toast.LENGTH_SHORT).show()
+                            }
                         }
                     },
                 ) {
@@ -347,18 +370,147 @@ fun LyricsMenu(
         }
     }
 
+    // Provider Selection Dialog
+    if (viewModel.showProviderSelectionDialog) {
+        val availableProviders by remember { viewModel.availableProviders }
+        val selectedProviders by remember { viewModel.selectedProviders }
+        val preferSyncedLyrics by rememberPreference(PreferSyncedLyricsKey, true)
+        
+        DefaultDialog(
+            onDismiss = { viewModel.closeProviderSelectionDialog() },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.search),
+                    contentDescription = null
+                )
+            },
+            title = { Text(stringResource(R.string.select_lyrics_provider)) },
+            buttons = {
+                TextButton(
+                    onClick = { viewModel.closeProviderSelectionDialog() },
+                ) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                TextButton(
+                    onClick = {
+                        viewModel.searchWithSelectedProviders()
+                        showSearchResultDialog = true
+                        
+                        // Show warning if network is unavailable
+                        if (!isNetworkAvailable) {
+                            Toast.makeText(context, context.getString(R.string.error_no_internet), Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = selectedProviders.isNotEmpty()
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+        ) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                // Provider checkboxes
+                availableProviders.forEach { provider ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = provider.isEnabled) {
+                                viewModel.toggleProviderSelection(provider.name)
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = selectedProviders.contains(provider.name),
+                            onCheckedChange = { viewModel.toggleProviderSelection(provider.name) },
+                            enabled = provider.isEnabled
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = provider.displayName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (provider.isEnabled) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                }
+                            )
+                            if (!provider.isEnabled) {
+                                Text(
+                                    text = stringResource(R.string.provider_disabled),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Prefer synced toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            coroutineScope.launch {
+                                context.dataStore.edit { settings ->
+                                    settings[PreferSyncedLyricsKey] = !preferSyncedLyrics
+                                }
+                            }
+                        }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.prefer_synced_lyrics),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.prefer_synced_lyrics_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    Switch(
+                        checked = preferSyncedLyrics,
+                        onCheckedChange = {
+                            coroutineScope.launch {
+                                context.dataStore.edit { settings ->
+                                    settings[PreferSyncedLyricsKey] = it
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
     var showRomanizationDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
     var showRomanization by rememberSaveable { mutableStateOf(false) }
     var isChecked by remember { mutableStateOf(songProvider()?.romanizeLyrics ?: true) }
+    var isInstrumental by remember { mutableStateOf(songProvider()?.isInstrumental ?: false) }
 
     var lyricsOffset by rememberSaveable { mutableIntStateOf(songProvider()?.lyricsOffset ?: 0) }
 
     // Sync isChecked with song changes
     LaunchedEffect(songProvider()) {
         isChecked = songProvider()?.romanizeLyrics ?: true
+    }
+    
+    // Sync isInstrumental with song changes
+    LaunchedEffect(songProvider()) {
+        isInstrumental = songProvider()?.isInstrumental ?: false
     }
 
     LaunchedEffect(songProvider()) {
@@ -497,6 +649,55 @@ fun LyricsMenu(
                                         songProvider()?.let { song ->
                                             database.query {
                                                 upsert(song.copy(romanizeLyrics = newCheckedState))
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    )
+                    
+                    add(
+                        Material3MenuItemData(
+                            title = { Text(text = stringResource(R.string.tag_as_instrumental)) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.music_note),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                isInstrumental = !isInstrumental
+                                // Cancel any ongoing lyrics search
+                                if (isInstrumental) {
+                                    viewModel.cancelSearch()
+                                }
+                                songProvider()?.let { song ->
+                                    database.query {
+                                        upsert(song.copy(isInstrumental = isInstrumental))
+                                        // Clear lyrics when tagged as instrumental
+                                        if (isInstrumental) {
+                                            delete(LyricsEntity(song.id, "", ""))
+                                        }
+                                    }
+                                }
+                            },
+                            trailingContent = {
+                                Switch(
+                                    checked = isInstrumental,
+                                    onCheckedChange = { newCheckedState ->
+                                        isInstrumental = newCheckedState
+                                        // Cancel any ongoing lyrics search
+                                        if (newCheckedState) {
+                                            viewModel.cancelSearch()
+                                        }
+                                        songProvider()?.let { song ->
+                                            database.query {
+                                                upsert(song.copy(isInstrumental = newCheckedState))
+                                                // Clear lyrics when tagged as instrumental
+                                                if (newCheckedState) {
+                                                    delete(LyricsEntity(song.id, "", ""))
+                                                }
                                             }
                                         }
                                     }

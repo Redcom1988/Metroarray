@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 34,
-    "identityHash": "2654596d45ae6f3858f440fd2672a6b0",
+    "version": 35,
+    "identityHash": "78e79859cf4afb18dc12b706b75f96a7",
     "entities": [
       {
         "tableName": "song",
