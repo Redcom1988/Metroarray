@@ -190,6 +190,11 @@
     <string name="lyrics_search_show_provider_selection_desc">Choose which lyrics provider to query when manually searching</string>
     <string name="prefer_synced_lyrics">Prefer synced lyrics</string>
     <string name="prefer_synced_lyrics_desc">Try to find synced lyrics first, show unsynced if unavailable</string>
+    <string name="lyrics_query_mode">Lyrics query mode</string>
+    <string name="lyrics_query_mode_coarse">Coarse (Title only)</string>
+    <string name="lyrics_query_mode_fine">Fine (Title + Artist)</string>
+    <string name="lyrics_fallback_to_coarse">Fallback to coarse search</string>
+    <string name="lyrics_fallback_to_coarse_desc">If fine search fails, try coarse search (only for Fine mode)</string>
     <string name="select_lyrics_provider">Select Lyrics Provider</string>
     <string name="provider_disabled">(Disabled)</string>
     <string name="tag_as_instrumental">Tag as instrumental</string>

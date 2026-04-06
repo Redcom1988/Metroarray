@@ -71,6 +71,8 @@ import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.mkv.MatroskaExtractor
 import androidx.media3.extractor.mp3.Mp3Extractor
 import androidx.media3.extractor.mp4.FragmentedMp4Extractor
+import androidx.media3.extractor.ogg.OggExtractor
+import androidx.media3.extractor.wav.WavExtractor
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaController
@@ -2814,7 +2816,13 @@ class MusicService :
         DefaultMediaSourceFactory(
             createDataSourceFactory(),
             ExtractorsFactory {
-                arrayOf(Mp3Extractor(), MatroskaExtractor(), FragmentedMp4Extractor())
+                arrayOf(
+                    Mp3Extractor(),
+                    MatroskaExtractor(),
+                    FragmentedMp4Extractor(),
+                    OggExtractor(),
+                    WavExtractor()
+                )
             },
         )
 
@@ -2823,6 +2831,7 @@ class MusicService :
         silenceProcessor: SilenceDetectorAudioProcessor
     ) =
         object : DefaultRenderersFactory(this) {
+
             override fun buildAudioSink(
                 context: Context,
                 enableFloatOutput: Boolean,

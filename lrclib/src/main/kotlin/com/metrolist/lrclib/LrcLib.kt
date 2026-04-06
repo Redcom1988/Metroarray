@@ -16,6 +16,12 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.json.Json
 import kotlin.math.abs
 
+enum class QueryMode {
+    COARSE,                         // Simple text search (q parameter, title only)
+    FINE,                           // Structured search (track/artist/album parameters)
+    FINE_WITH_COARSE_FALLBACK      // Try FINE first, fall back to COARSE if no results
+}
+
 object LrcLib {
     private val client by lazy {
         HttpClient(CIO) {
@@ -90,49 +96,78 @@ object LrcLib {
         artist: String,
         title: String,
         album: String? = null,
+        queryMode: QueryMode = QueryMode.FINE,
     ): List<Track> {
         val cleanedTitle = cleanTitle(title)
         val cleanedArtist = cleanArtist(artist)
         
-        // Strategy 1: Search with cleaned title and artist
-        var results = queryLyricsWithParams(
-            trackName = cleanedTitle,
-            artistName = cleanedArtist,
-            albumName = album
-        ).filter { it.syncedLyrics != null || it.plainLyrics != null }
-        
-        if (results.isNotEmpty()) return results
-        
-        // Strategy 2: Search with cleaned title only (artist might be different)
-        results = queryLyricsWithParams(
-            trackName = cleanedTitle
-        ).filter { it.syncedLyrics != null || it.plainLyrics != null }
-        
-        if (results.isNotEmpty()) return results
-        
-        // Strategy 3: Use q parameter with combined search
-        results = queryLyricsWithParams(
-            query = "$cleanedArtist $cleanedTitle"
-        ).filter { it.syncedLyrics != null || it.plainLyrics != null }
-        
-        if (results.isNotEmpty()) return results
-        
-        // Strategy 4: Use q parameter with just title
-        results = queryLyricsWithParams(
-            query = cleanedTitle
-        ).filter { it.syncedLyrics != null || it.plainLyrics != null }
-        
-        if (results.isNotEmpty()) return results
-        
-        // Strategy 5: Try original title if different from cleaned
-        if (cleanedTitle != title.trim()) {
-            results = queryLyricsWithParams(
-                trackName = title.trim(),
-                artistName = artist.trim()
-            ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+        return when (queryMode) {
+            QueryMode.COARSE -> {
+                // Coarse Search: q parameter with title only (simple text search)
+                // Strategy 1: Use cleaned title
+                var results = queryLyricsWithParams(
+                    query = cleanedTitle
+                ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                
+                if (results.isNotEmpty()) return results
+                
+                // Strategy 2: Try original title if different from cleaned
+                if (cleanedTitle != title.trim()) {
+                    results = queryLyricsWithParams(
+                        query = title.trim()
+                    ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                }
+                
+                results
+            }
+            
+            QueryMode.FINE -> {
+                // Fine Search: Structured parameters (track/artist/album)
+                // Strategy 1: Search with cleaned title, artist and album (most specific)
+                var results = queryLyricsWithParams(
+                    trackName = cleanedTitle,
+                    artistName = cleanedArtist,
+                    albumName = album
+                ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                
+                if (results.isNotEmpty()) return results
+                
+                // Strategy 2: Search with cleaned title and artist (no album)
+                results = queryLyricsWithParams(
+                    trackName = cleanedTitle,
+                    artistName = cleanedArtist
+                ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                
+                if (results.isNotEmpty()) return results
+                
+                // Strategy 3: Search with cleaned title only (artist might be wrong)
+                results = queryLyricsWithParams(
+                    trackName = cleanedTitle
+                ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                
+                if (results.isNotEmpty()) return results
+                
+                // Strategy 4: Try original title and artist if different from cleaned
+                if (cleanedTitle != title.trim()) {
+                    results = queryLyricsWithParams(
+                        trackName = title.trim(),
+                        artistName = artist.trim()
+                    ).filter { it.syncedLyrics != null || it.plainLyrics != null }
+                }
+                
+                results
+            }
+            
+            QueryMode.FINE_WITH_COARSE_FALLBACK -> {
+                // First: Try all FINE search strategies
+                var results = queryLyrics(artist, title, album, QueryMode.FINE)
+                
+                if (results.isNotEmpty()) return results
+                
+                // Fallback: Try COARSE search (broader, less specific)
+                queryLyrics(artist, title, album, QueryMode.COARSE)
+            }
         }
-        
-        return results
     }
 
     suspend fun getLyrics(
@@ -140,8 +175,9 @@ object LrcLib {
         artist: String,
         duration: Int,
         album: String? = null,
+        queryMode: QueryMode = QueryMode.FINE,
     ) = runCatching {
-        val tracks = queryLyrics(artist, title, album)
+        val tracks = queryLyrics(artist, title, album, queryMode)
         val cleanedTitle = cleanTitle(title)
         val cleanedArtist = cleanArtist(artist)
 
@@ -171,9 +207,10 @@ object LrcLib {
         artist: String,
         duration: Int,
         album: String? = null,
+        queryMode: QueryMode = QueryMode.FINE,
         callback: (String) -> Unit,
     ) {
-        val tracks = queryLyrics(artist, title, album)
+        val tracks = queryLyrics(artist, title, album, queryMode)
         val cleanedTitle = cleanTitle(title)
         val cleanedArtist = cleanArtist(artist)
         var count = 0

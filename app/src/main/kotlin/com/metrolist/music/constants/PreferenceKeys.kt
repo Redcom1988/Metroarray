@@ -196,6 +196,8 @@ val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
 val LyricsSearchShowProviderSelectionKey = booleanPreferencesKey("lyricsSearchShowProviderSelection")
 val LastSelectedLyricsProviderKey = stringPreferencesKey("lastSelectedLyricsProvider")
 val PreferSyncedLyricsKey = booleanPreferencesKey("preferSyncedLyrics")
+val LyricsQueryModeKey = stringPreferencesKey("lyricsQueryMode")
+val LyricsQueryFallbackToCoarseKey = booleanPreferencesKey("lyricsQueryFallbackToCoarse")
 val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
 val ShowWrappedCardKey = booleanPreferencesKey("show_wrapped_card")
 val WrappedSeenKey = booleanPreferencesKey("wrapped_seen")
@@ -351,6 +353,11 @@ enum class PreferredLyricsProvider {
     KUGOU,
     BETTER_LYRICS,
     SIMPMUSIC,
+}
+
+enum class LyricsQueryMode {
+    COARSE,  // Simple text search (q parameter, title only)
+    FINE,    // Structured search (track/artist/album parameters)
 }
 
 enum class PlayerButtonsStyle {

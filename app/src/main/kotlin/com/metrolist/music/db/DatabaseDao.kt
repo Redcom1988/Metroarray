@@ -1747,12 +1747,15 @@ interface DatabaseDao {
     @Query("DELETE FROM local_music_scan_result WHERE folderId = :folderId")
     fun deleteScanResultsForFolder(folderId: String)
 
+    @Transaction
     @Query("SELECT * FROM song WHERE isLocal = 1 ORDER BY title")
     fun getLocalSongs(): Flow<List<Song>>
 
+    @Transaction
     @Query("SELECT * FROM song WHERE localPath = :localPath LIMIT 1")
     suspend fun getSongByLocalPath(localPath: String): Song?
 
+    @Transaction
     @Query("SELECT * FROM song WHERE isLocal = 1 AND localPath LIKE :folderPath || '%'")
     fun getSongsInFolder(folderPath: String): Flow<List<Song>>
 

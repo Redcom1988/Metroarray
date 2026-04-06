@@ -66,6 +66,9 @@ import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HideYoutubeShortsKey
 import com.metrolist.music.constants.LanguageCodeToName
+import com.metrolist.music.constants.LyricsQueryFallbackToCoarseKey
+import com.metrolist.music.constants.LyricsQueryMode
+import com.metrolist.music.constants.LyricsQueryModeKey
 import com.metrolist.music.constants.LyricsSearchShowProviderSelectionKey
 import com.metrolist.music.constants.PreferSyncedLyricsKey
 import com.metrolist.music.constants.PreferredLyricsProvider
@@ -130,6 +133,10 @@ fun ContentSettings(
         rememberPreference(key = LyricsSearchShowProviderSelectionKey, defaultValue = true)
     val (preferSyncedLyrics, onPreferSyncedLyricsChange) = 
         rememberPreference(key = PreferSyncedLyricsKey, defaultValue = true)
+    val (lyricsQueryMode, onLyricsQueryModeChange) = 
+        rememberEnumPreference(key = LyricsQueryModeKey, defaultValue = LyricsQueryMode.FINE)
+    val (lyricsQueryFallbackToCoarse, onLyricsQueryFallbackToCoarseChange) = 
+        rememberPreference(key = LyricsQueryFallbackToCoarseKey, defaultValue = false)
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
     val (showWrappedCard, onShowWrappedCardChange) = rememberPreference(key = ShowWrappedCardKey, defaultValue = false)
@@ -376,6 +383,29 @@ fun ContentSettings(
 
     var showQuickPicksDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+    
+    var showQueryModeDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    if (showQueryModeDialog) {
+        EnumDialog(
+            onDismiss = { showQueryModeDialog = false },
+            onSelect = {
+                onLyricsQueryModeChange(it)
+                showQueryModeDialog = false
+            },
+            title = stringResource(R.string.lyrics_query_mode),
+            current = lyricsQueryMode,
+            values = LyricsQueryMode.values().toList(),
+            valueText = {
+                when (it) {
+                    LyricsQueryMode.COARSE -> stringResource(R.string.lyrics_query_mode_coarse)
+                    LyricsQueryMode.FINE -> stringResource(R.string.lyrics_query_mode_fine)
+                }
+            }
+        )
     }
 
     if (showQuickPicksDialog) {
@@ -815,6 +845,46 @@ fun ContentSettings(
                         )
                     },
                     onClick = { onPreferSyncedLyricsChange(!preferSyncedLyrics) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.search),
+                    title = { Text(stringResource(R.string.lyrics_query_mode)) },
+                    description = {
+                        Text(
+                            when (lyricsQueryMode) {
+                                LyricsQueryMode.COARSE -> stringResource(R.string.lyrics_query_mode_coarse)
+                                LyricsQueryMode.FINE -> stringResource(R.string.lyrics_query_mode_fine)
+                            }
+                        )
+                    },
+                    onClick = { showQueryModeDialog = true }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.arrow_back),
+                    title = { Text(stringResource(R.string.lyrics_fallback_to_coarse)) },
+                    description = { Text(stringResource(R.string.lyrics_fallback_to_coarse_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = lyricsQueryFallbackToCoarse,
+                            onCheckedChange = onLyricsQueryFallbackToCoarseChange,
+                            enabled = lyricsQueryMode == LyricsQueryMode.FINE,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (lyricsQueryFallbackToCoarse) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { 
+                        if (lyricsQueryMode == LyricsQueryMode.FINE) {
+                            onLyricsQueryFallbackToCoarseChange(!lyricsQueryFallbackToCoarse)
+                        }
+                    },
+                    enabled = lyricsQueryMode == LyricsQueryMode.FINE
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language_korean_latin),
